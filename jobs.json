@@ -1,0 +1,45 @@
+{
+  "_instrucciones": "Sustituye cada puesto por uno REAL que hayas encontrado llamando. Pon el sueldo tal cual (bruto/mes o €/hora). Cuando un puesto sea real, cambia placeholder a false. Mientras quede alguno en true, la página muestra un aviso de BORRADOR.",
+  "jobs": [
+    {
+      "placeholder": true,
+      "puesto": "[Puesto real 1 — p. ej. mozo/a de cuadra]",
+      "lugar": "[Pueblo, comarca]",
+      "sueldo": "[€ bruto/mes]",
+      "horario": "[Jornada, turnos, fines de semana]",
+      "que_haras": "[Dos líneas sobre el trabajo de verdad: cuántos caballos, qué tareas, quién manda.]"
+    },
+    {
+      "placeholder": true,
+      "puesto": "[Puesto real 2]",
+      "lugar": "[Pueblo, comarca]",
+      "sueldo": "[€ bruto/mes]",
+      "horario": "[Jornada]",
+      "que_haras": "[Qué se hace un día normal.]"
+    },
+    {
+      "placeholder": true,
+      "puesto": "[Puesto real 3]",
+      "lugar": "[Pueblo, comarca]",
+      "sueldo": "[€ bruto/mes]",
+      "horario": "[Jornada]",
+      "que_haras": "[Qué se hace un día normal.]"
+    },
+    {
+      "placeholder": true,
+      "puesto": "[Puesto real 4]",
+      "lugar": "[Pueblo, comarca]",
+      "sueldo": "[€ bruto/mes]",
+      "horario": "[Jornada]",
+      "que_haras": "[Qué se hace un día normal.]"
+    },
+    {
+      "placeholder": true,
+      "puesto": "[Puesto real 5]",
+      "lugar": "[Pueblo, comarca]",
+      "sueldo": "[€ bruto/mes]",
+      "horario": "[Jornada]",
+      "que_haras": "[Qué se hace un día normal.]"
+    }
+  ]
+}

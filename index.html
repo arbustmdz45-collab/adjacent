@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trabajos con caballos en Cataluña</title>
+<meta name="description" content="Puestos reales en cuadras de Cataluña, con el sueldo escrito tal cual. Para auxiliares de veterinaria.">
+<style>
+  :root {
+    --bg: #faf8f4;
+    --card: #ffffff;
+    --ink: #1f1d1a;
+    --muted: #6b665e;
+    --line: #e4dfd6;
+    --accent: #2f5d4a;
+    --accent-ink: #ffffff;
+    --warn-bg: #fff1d6;
+    --warn-ink: #7a4b00;
+    --todo: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+
+  .draft {
+    background: var(--warn-bg); color: var(--warn-ink);
+    padding: 12px 16px; font-size: 15px; text-align: center;
+    border-bottom: 1px solid #f0d9a8;
+  }
+  .draft[hidden] { display: none; }
+
+  header { padding: 56px 0 24px; }
+  .for { font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 0 0 12px; }
+  h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.01em; }
+  .lede { font-size: 19px; color: var(--muted); margin: 0; }
+
+  section { padding: 24px 0; }
+  h2 { font-size: 22px; margin: 0 0 12px; }
+
+  .why ul { padding-left: 20px; margin: 0; }
+  .why li { margin: 6px 0; }
+  .honest { margin-top: 16px; color: var(--muted); }
+
+  .jobs { display: grid; gap: 14px; }
+  .job {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .job-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; align-items: baseline; }
+  .job h3 { font-size: 18px; margin: 0; }
+  .pay { font-weight: 700; font-size: 18px; white-space: nowrap; }
+  .meta { color: var(--muted); font-size: 15px; margin: 4px 0 10px; }
+  .job p { margin: 0; }
+  .todo { color: var(--todo); }
+
+  form {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 20px; display: grid; gap: 14px;
+  }
+  label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
+  label span { font-weight: 400; color: var(--muted); }
+  input, textarea {
+    font: inherit; color: var(--ink); background: #fff;
+    border: 1px solid #cfc8bb; border-radius: 8px; padding: 10px 12px; width: 100%;
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    background: var(--accent); color: var(--accent-ink);
+    border: 0; border-radius: 8px; padding: 12px 18px; justify-self: start;
+  }
+  button:hover { filter: brightness(1.1); }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .small { font-size: 14px; color: var(--muted); margin: 0; }
+  .msg { border-radius: 10px; padding: 18px 20px; }
+  .msg.ok { background: #e6f2ec; border: 1px solid #bcd9ca; }
+  .msg.err { background: #fde8e6; border: 1px solid #f2c0bb; margin-bottom: 14px; }
+  .msg[hidden] { display: none; }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161513; --card: #1f1e1b; --ink: #ece8e1; --muted: #a8a197;
+      --line: #34312c; --accent: #7fbf9f; --accent-ink: #10201a;
+      --warn-bg: #3a2c0f; --warn-ink: #f3d08a; --todo: #ff8a80;
+    }
+    input, textarea { background: #151412; border-color: #44403a; }
+    .msg.ok { background: #18291f; border-color: #2c4a39; }
+    .msg.err { background: #331a18; border-color: #5a2a26; }
+    .draft { border-bottom-color: #5a4518; }
+  }
+</style>
+</head>
+<body>
+
+<div class="draft" id="draft" hidden>
+  <strong>Borrador:</strong> <span id="draft-count"></span> No compartas esta página hasta que todos sean puestos reales (edita <code>jobs.json</code>).
+</div>
+
+<main>
+  <header>
+    <p class="for">Para auxiliares de veterinaria en Cataluña</p>
+    <h1>Hay cuadras en Cataluña buscando a alguien como tú.</h1>
+    <p class="lede">Son trabajos reales, con caballos, que hoy cubre gente sin formación porque nadie con formación se entera de que existen. Abajo tienes cinco, con el sueldo escrito tal cual.</p>
+  </header>
+
+  <section class="why">
+    <h2>Por qué tú</h2>
+    <ul>
+      <li>Ya sabes manejar animales que tienen miedo o dolor sin ponerte nervioso.</li>
+      <li>Notas cuándo un animal no está bien antes de que sea un problema: cojera, cólico, que no come.</li>
+      <li>Sabes administrar medicación, hacer curas y seguir un protocolo de higiene sin que nadie te lo recuerde.</li>
+      <li>Estás acostumbrado a turnos, a madrugar y a que el trabajo no espere.</li>
+    </ul>
+    <p class="honest">Lo que no te vamos a esconder: el sueldo suele ser más bajo que en una clínica, y muchas cuadras están fuera de Barcelona. Si con eso ya no te compensa, mejor saberlo ahora.</p>
+  </section>
+
+  <section>
+    <h2>Los puestos</h2>
+    <div class="jobs" id="jobs"><p class="small">Cargando…</p></div>
+  </section>
+
+  <section id="interes">
+    <h2>¿Quieres saber más?</h2>
+    <div class="msg ok" id="ok" hidden>
+      <strong>Recibido, gracias.</strong> Te escribo yo personalmente en los próximos días para contarte más sobre el puesto que te interese.
+    </div>
+    <div id="form-wrap">
+      <div class="msg err" id="err" hidden>Ese email no parece válido. ¿Lo revisas?</div>
+      <form method="post" action="/interest">
+        <label>Email
+          <input type="email" name="email" required autocomplete="email" maxlength="254">
+        </label>
+        <label>¿A qué te dedicas ahora? <span>(opcional)</span>
+          <input type="text" name="trabajo" maxlength="200" placeholder="p. ej. auxiliar en una clínica de pequeños animales en Sabadell">
+        </label>
+        <label>¿Por qué te interesa? <span>(una línea basta)</span>
+          <textarea name="nota" maxlength="1000"></textarea>
+        </label>
+        <div class="hp" aria-hidden="true">
+          <label>No rellenar <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        </div>
+        <button type="submit">Quiero saber más</button>
+        <p class="small">Solo uso tu email para escribirte sobre estos puestos. No hay cuenta, ni lista de correo, ni nadie más lo ve.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  if (params.get('gracias')) {
+    document.getElementById('ok').hidden = false;
+    document.getElementById('form-wrap').hidden = true;
+  }
+  if (params.get('error')) document.getElementById('err').hidden = false;
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) {
+      n.textContent = text;
+      if (/^\[.*\]$/.test(String(text).trim())) n.classList.add('todo');
+    }
+    return n;
+  }
+
+  fetch('/jobs.json', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var jobs = (data.jobs || []).slice(0, 5);
+      var box = document.getElementById('jobs');
+      box.textContent = '';
+      jobs.forEach(function (j) {
+        var card = el('article', 'job');
+        var top = el('div', 'job-top');
+        top.appendChild(el('h3', null, j.puesto));
+        top.appendChild(el('span', 'pay', j.sueldo));
+        card.appendChild(top);
+        card.appendChild(el('p', 'meta', [j.lugar, j.horario].filter(Boolean).join(' · ')));
+        card.appendChild(el('p', null, j.que_haras));
+        box.appendChild(card);
+      });
+      var pending = jobs.filter(function (j) { return j.placeholder; }).length;
+      if (pending) {
+        document.getElementById('draft-count').textContent =
+          pending + ' de ' + jobs.length + ' puestos son de ejemplo.';
+        document.getElementById('draft').hidden = false;
+      }
+    })
+    .catch(function () {
+      document.getElementById('jobs').textContent = 'No se pudieron cargar los puestos.';
+    });
+})();
+</script>
+</body>
+</html>
