@@ -1,14 +1,15 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { limited } from "@/lib/rate-limit";
 import { CANDIDATE_TOOL, HIRING_SYSTEM, candidatePrompt } from "@/lib/hiring-prompt";
-import { SYSTEM, TOOLS, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
+import { ask } from "@/lib/ai";
+import { checkAgainst } from "@/lib/check";
+import { describeMoves, provenMoves, type ProvenMove } from "@/lib/store";
+import { TOOLS, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
 import type { AnalyseRequest, CandidateResponse, Capability, Field } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 const MAX_ROLE_CHARS = 4000;
 
 const MAX_REQUESTS = Number(process.env.RATE_LIMIT_PER_10_MIN || 30);
@@ -30,10 +31,22 @@ function validCapabilities(caps: unknown): caps is Capability[] {
   );
 }
 
-// Drop mappings that point at capabilities that no longer exist.
-function clean(field: Field, caps: Capability[]): Field {
+// Proven moves come from the database. Without one (local demo), the tool still works without them.
+async function loadMoves(): Promise<ProvenMove[]> {
+  try {
+    return await provenMoves();
+  } catch (err) {
+    console.warn("Proven moves unavailable:", (err as Error).message);
+    return [];
+  }
+}
+
+// Drop mappings that point at capabilities that no longer exist, and attach real counts for a proven move.
+function clean(field: Field, caps: Capability[], moves: ProvenMove[] = []): Field {
   const ids = new Set(caps.map((c) => c.id));
+  const move = field.proven_move_id ? moves.find((m) => m.key === field.proven_move_id) : undefined;
   return {
+    proven: move ? { from: move.from, to: move.to, hired: move.hired, retained: move.retained } : null,
     ...field,
     maps: (field.maps || []).filter((m) => ids.has(m.capability_id)),
     titles: Array.isArray(field.titles) ? field.titles.filter((t) => typeof t === "string").slice(0, 4) : [],
@@ -43,43 +56,6 @@ function clean(field: Field, caps: Capability[]): Field {
 }
 
 const MAX_CANDIDATE_CHARS = 12000;
-const norm = (s: string) => s.toLowerCase().replace(/[\s"“”'‘’.,;:()\-–—]+/g, " ").trim();
-
-// Keep the check honest: one entry per capability, in order, and drop any
-// quote that isn't actually in the candidate's text.
-function checkAgainst(check: CandidateResponse["check"], caps: Capability[], text: string): CandidateResponse["check"] {
-  const source = norm(text);
-  const ids = new Set(caps.map((c) => c.id));
-  const coverage = caps.map((c) => {
-    const found = (check.coverage || []).find((x) => x.capability_id === c.id);
-    if (!found) return { capability_id: c.id, evidence: "not_shown" as const, quote: null, note: "This check didn't cover it. Ask about it in the interview." };
-    const quoteOk = found.quote && found.evidence !== "not_shown" && source.includes(norm(found.quote));
-    return { ...found, quote: quoteOk ? found.quote : null };
-  });
-  return {
-    ...check,
-    coverage,
-    questions: (check.questions || []).filter((q) => ids.has(q.capability_id)),
-    ramp: (check.ramp || []).filter((r) => ids.has(r.capability_id)),
-  };
-}
-
-type ToolDef = { name: string; description: string; input_schema: unknown };
-
-async function ask<T>(tool: ToolDef, prompt: string, system: string = SYSTEM): Promise<T> {
-  const client = new Anthropic(); // reads ANTHROPIC_API_KEY
-  const res = await client.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
-    system,
-    tools: [tool as unknown as Anthropic.Tool],
-    tool_choice: { type: "tool", name: tool.name },
-    messages: [{ role: "user", content: prompt }],
-  });
-  const block = res.content.find((b) => b.type === "tool_use");
-  if (!block || block.type !== "tool_use") throw new Error("The model returned no structured answer.");
-  return block.input as T;
-}
 
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) return bad("Server is missing ANTHROPIC_API_KEY.", 500);
@@ -108,13 +84,14 @@ export async function POST(req: Request) {
     const rejected = "rejected" in body && Array.isArray(body.rejected) ? body.rejected.slice(0, 20) : [];
 
     if (body.step === "fields") {
+      const moves = await loadMoves();
       const out = await ask<{ fields: Field[]; gap: { capability_id: string; note: string } | null }>(
         TOOLS.fields,
-        fieldsPrompt(body.role, industry, body.capabilities, rejected),
+        fieldsPrompt(body.role, industry, body.capabilities, rejected, describeMoves(moves)),
       );
       const ids = new Set(body.capabilities.map((c) => c.id));
       return NextResponse.json({
-        fields: out.fields.map((f) => clean(f, body.capabilities)),
+        fields: out.fields.map((f) => clean(f, body.capabilities, moves)),
         gap: out.gap && ids.has(out.gap.capability_id) ? out.gap : null,
       });
     }
@@ -133,11 +110,12 @@ export async function POST(req: Request) {
 
     if (body.step === "replace") {
       const keep = Array.isArray(body.keep) ? body.keep : [];
+      const moves = await loadMoves();
       const out = await ask<{ field: Field }>(
         TOOLS.replace,
-        replacePrompt(body.role, industry, body.capabilities, keep, rejected),
+        replacePrompt(body.role, industry, body.capabilities, keep, rejected, describeMoves(moves)),
       );
-      return NextResponse.json({ field: clean(out.field, body.capabilities) });
+      return NextResponse.json({ field: clean(out.field, body.capabilities, moves) });
     }
 
     return bad("Unknown step.");

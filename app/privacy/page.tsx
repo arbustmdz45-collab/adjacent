@@ -15,8 +15,8 @@ export default function Privacy() {
 
         <h2>When you describe your day</h2>
         <p>
-          The text you type is sent to our AI provider (Anthropic) so it can produce your reading. adjacent doesn’t save it:
-          there are no accounts and no history, and closing the tab clears it. Don’t include names, health details or anything
+          The text you type is sent to our AI provider (Anthropic) so it can produce your reading. adjacent doesn’t save it
+          unless you choose “Let employers find me”: there are no accounts and no history, and closing the tab clears it. Don’t include names, health details or anything
           you wouldn’t want processed. The tool doesn’t need them.
         </p>
 
@@ -27,9 +27,16 @@ export default function Privacy() {
           at any time and we will.
         </p>
 
+        <h2>When you join the pool</h2>
+        <p>
+          If you choose “Let employers find me”, we keep your first name, email, area, your description and the activities
+          from your reading. Employers see your background, activities and your own words, never your name or contact details,
+          until you agree to meet. You get a private link to see everything we keep and delete it at any time.
+        </p>
+
         <h2>Hiring decisions</h2>
         <p>
-          adjacent describes work and suggests where it transfers. It never ranks, scores or rejects people. Any hiring
+          adjacent describes work and shows the evidence for each match. It never rejects anyone automatically. Every hiring
           decision is made by a person.
         </p>
 

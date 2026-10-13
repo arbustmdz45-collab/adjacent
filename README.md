@@ -20,7 +20,16 @@ The result can be changed in place:
 
 **Candidate check (built, currently hidden).** Paste a CV, or a few lines on what a person has done. You see, capability by capability, whether their background shows it, in their own words. Then you get interview questions to verify what's partial or missing, and a rough training plan to close the gaps. The verdict is one of "worth an interview", "worth a short call first" or "not enough evidence yet". It never says a person is unsuitable. Quotes are checked against the pasted text, and any that don't appear in it are dropped. Names, age and other personal details are ignored.
 
-There are no accounts, no saving and no history. To try a different job, start again.
+
+## The business loop
+
+The free tool is the way in. What adjacent owns is what happens after it:
+
+1. **Pool (opt-in).** At the end of a reading, people can choose "Let employers find me". With their consent we keep their description and activities. Each person gets a private link to see and delete everything.
+2. **Employer side.** In the operator area (`/admin`) you add a hard-to-fill role. You get the activities it really requires, three source fields, a rewritten job ad and interview questions. "Find people in the pool" reads everyone against the role, capability by capability, with their own words as evidence. You shortlist people, and the employer gets a private link (`/r/…`) showing the breakdown and the shortlist, without names or contact details. They press "I'd like to meet this person", and you get notified.
+3. **Outcomes.** You move each person through stages: shortlisted, introduced, interviewed, hired, still there after 90 days, or left. Hires become **proven moves** ("hospitality → logistics operations: 3 hired, 2 still there after 90 days"). Proven moves are fed back into the tool. The model prefers them when they fit, and people see the real counts on that field. No model can make those numbers up.
+
+Nobody is rejected automatically, and a person makes every decision.
 
 ## How it's built
 
@@ -30,6 +39,12 @@ app/try/page.tsx          The tool: empty, thinking, result
 app/privacy/page.tsx      Plain-language privacy note (have it reviewed before launch)
 app/api/analyse/route.ts  The tool's API route. Steps: capabilities, fields, replace (+ hidden candidate)
 app/api/subscribe/route.ts  Newsletter and employer pilot requests, forwarded to LEADS_WEBHOOK_URL
+app/api/pool/route.ts     "Let employers find me": saves a profile to the pool, with consent
+app/admin/                Operator area: roles, pool, proven moves (ADMIN_PASSWORD)
+app/r/[token]/            Private employer link for one role
+app/me/[token]/           A candidate's private page to see and delete their profile
+lib/db.ts                 Postgres (DATABASE_URL), or an embedded local database for development
+lib/store.ts              Candidates, roles, matches, stages, proven moves
 lib/prompt.ts             Everything the model is told for the pivoting flow
 lib/hiring-prompt.ts      Employer-side candidate check (hidden for now)
 lib/types.ts              The shape of a capability, a field, a gap
@@ -68,7 +83,8 @@ npm run dev
 ## Deploy
 
 1. Import this repo at vercel.com/new.
-2. Add the environment variables from `.env.example`: `ANTHROPIC_API_KEY`, `LEADS_WEBHOOK_URL` and `NEXT_PUBLIC_SITE_URL` at least.
-3. Deploy.
+2. Add a Postgres database: in the Vercel project, Storage → Create → Neon (free tier). It sets `DATABASE_URL` for you.
+3. Add the environment variables from `.env.example`: `ANTHROPIC_API_KEY`, `ADMIN_PASSWORD`, `LEADS_WEBHOOK_URL` and `NEXT_PUBLIC_SITE_URL`.
+4. Deploy. The tables are created on first use.
 
 The rate limit is per server instance and held in memory. It stops casual abuse but won't hold up under real traffic, so move it to a shared store such as Upstash Redis before you share the link widely.

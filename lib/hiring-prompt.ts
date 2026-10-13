@@ -44,6 +44,91 @@ RULES
 - Do not assume anything the text doesn't say. Write in the language of the role description.`;
 }
 
+// ---- Role breakdown: what an employer gets for one hard-to-fill role ----
+
+export type RoleBreakdown = {
+  title: string;
+  industry: string;
+  field_label: string;
+  capabilities: { id: string; activity: string; detail: string }[];
+  sources: { field: string; strength: "strong" | "partial" | "weak"; activity: string; why_weak: string | null }[];
+  ad: { headline: string; body: string };
+  questions: { capability_id: string; question: string; listen_for: string }[];
+};
+
+export function rolePrompt(company: string, description: string, provenMoves: string) {
+  return `An employer has a role that's hard to fill. Turn their description into what they need to hire people from other fields.
+
+Company: ${company}
+
+<role>
+${description}
+</role>
+${provenMoves ? `\nMoves already proven through adjacent (real hires; prefer these as sources when they fit, and never invent others as "proven"):\n${provenMoves}\n` : ""}
+RETURN
+- title: a plain job title for the role, as it would appear in an ad.
+- industry: the industry the role sits in, broadly.
+- field_label: the kind of work this role is, in 2 to 4 words, e.g. "Logistics operations". Used to group hires.
+- capabilities: 4 to 6 activities the work actually demands. Describe the activity, not a label, using the object, scale and constraint in the description. Ids c1, c2… in order. Don't invent duties.
+- sources: exactly 3 fields OUTSIDE the role's industry where people already do these activities every day. For each: strength (strong / partial / weak, honestly), the specific activity there that transfers, and why_weak (null unless weak).
+- ad: a job ad that people from those source fields would recognise themselves in. headline: one line. body: 120 to 180 words, describing the activities rather than demanding the usual job title or years in the industry. Plain, warm, no clichés ("rockstar", "fast-paced environment"), no requirements the description doesn't justify. Do not invent pay, benefits or contract details; write [PAY], [HOURS] or [LOCATION] where they belong.
+- questions: 4 interview questions, one per central capability, each asking for a specific past situation from any field. listen_for: what a convincing answer contains.
+
+Write in the language of the description.`;
+}
+
+export const ROLE_TOOL = {
+  name: "return_role_breakdown",
+  description: "Return the role breakdown for the employer.",
+  input_schema: {
+    type: "object",
+    properties: {
+      title: { type: "string" },
+      industry: { type: "string" },
+      field_label: { type: "string" },
+      capabilities: {
+        type: "array",
+        minItems: 2,
+        maxItems: 6,
+        items: {
+          type: "object",
+          properties: { id: { type: "string" }, activity: { type: "string" }, detail: { type: "string" } },
+          required: ["id", "activity", "detail"],
+        },
+      },
+      sources: {
+        type: "array",
+        minItems: 1,
+        maxItems: 3,
+        items: {
+          type: "object",
+          properties: {
+            field: { type: "string" },
+            strength: { type: "string", enum: ["strong", "partial", "weak"] },
+            activity: { type: "string" },
+            why_weak: { type: ["string", "null"] },
+          },
+          required: ["field", "strength", "activity", "why_weak"],
+        },
+      },
+      ad: {
+        type: "object",
+        properties: { headline: { type: "string" }, body: { type: "string" } },
+        required: ["headline", "body"],
+      },
+      questions: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: { capability_id: { type: "string" }, question: { type: "string" }, listen_for: { type: "string" } },
+          required: ["capability_id", "question", "listen_for"],
+        },
+      },
+    },
+    required: ["title", "industry", "field_label", "capabilities", "sources", "ad", "questions"],
+  },
+} as const;
+
 export const CANDIDATE_TOOL = {
   name: "return_candidate_check",
   description: "Return the candidate check.",

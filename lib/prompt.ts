@@ -34,6 +34,9 @@ DESTINATIONS (the "fields")
 - If a move is weak, say so rather than padding. Three confident answers every time is a lie. A weak third field, labelled weak, is better than a dressed-up one.
 - why_weak is null unless strength is "weak".
 
+PROVEN MOVES
+- You may be given moves that real people already made through adjacent, with real hire counts. When one of your fields is the same kind of work as a proven move AND the person comes from that move's starting industry, set proven_move_id to its id. Prefer fields with proven moves when they genuinely fit, but never force one, and never claim a move is proven unless you set its id. Otherwise proven_move_id is null.
+
 GAP
 - If one of their capabilities isn't used by any field you return, name it and say in one or two sentences where it WOULD be valued, or why it doesn't travel. Otherwise null.
 
@@ -65,7 +68,11 @@ The person has already said no to these fields. Do not return them or close vari
 ${rejected.map((r) => `- ${r.field}${r.reason ? `: ${r.reason}` : " (no reason given)"}`).join("\n")}`;
 }
 
-export function fieldsPrompt(role: string, industry: string, capabilities: Capability[], rejected: Rejection[]) {
+function listProven(proven: string) {
+  return proven ? `\n\nProven moves (real hires through adjacent):\n${proven}` : "";
+}
+
+export function fieldsPrompt(role: string, industry: string, capabilities: Capability[], rejected: Rejection[], proven = "") {
   return `<work>
 ${role}
 </work>
@@ -73,7 +80,7 @@ ${role}
 Their current industry, to exclude: ${industry}
 
 What they can already do. The person may have edited this list; treat it as authoritative and do not rewrite it. Refer to capabilities by their id in maps and gap, and by their two-digit number in prose:
-${listCapabilities(capabilities)}${listRejected(rejected)}
+${listCapabilities(capabilities)}${listRejected(rejected)}${listProven(proven)}
 
 Return exactly 3 fields outside that industry they could move into, ordered strongest first, plus the gap. Use field ids f1, f2, f3.`;
 }
@@ -84,6 +91,7 @@ export function replacePrompt(
   capabilities: Capability[],
   keep: Field[],
   rejected: Rejection[],
+  proven = "",
 ) {
   return `<work>
 ${role}
@@ -94,7 +102,7 @@ Their current industry, to exclude: ${industry}
 What they can already do (authoritative, refer by id in maps, by two-digit number in prose):
 ${listCapabilities(capabilities)}
 
-Fields already on screen, which stay: ${keep.map((f) => f.field).join("; ") || "none"}.${listRejected(rejected)}
+Fields already on screen, which stay: ${keep.map((f) => f.field).join("; ") || "none"}.${listRejected(rejected)}${listProven(proven)}
 
 Return ONE new field to replace the one they most recently said no to. It must differ from the fields that stay and from every rejected field. If nothing good is left, return the best weak option and say so in why_weak.`;
 }
@@ -134,8 +142,9 @@ const fieldSchema = {
     titles: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 4 },
     say_it: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 3 },
     why_weak: { type: ["string", "null"] },
+    proven_move_id: { type: ["string", "null"], description: "Id of a proven move this field matches, or null." },
   },
-  required: ["id", "field", "strength", "maps", "work_there", "still_to_learn", "titles", "say_it", "why_weak"],
+  required: ["id", "field", "strength", "maps", "work_there", "still_to_learn", "titles", "say_it", "why_weak", "proven_move_id"],
 } as const;
 
 export const TOOLS = {

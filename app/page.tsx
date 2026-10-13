@@ -318,9 +318,13 @@ export default function Landing() {
                   <span className="n">03</span>We rewrite your job ad so those people recognise themselves in it, and give you
                   interview questions that test the work, not the title.
                 </li>
+                <li>
+                  <span className="n">04</span>We introduce people from our pool who already do the work, each shown against your
+                  role in their own words. You pay only when you hire.
+                </li>
               </ol>
               <div className="trust">
-                <p>✶ A person always decides. We never rank, score or reject candidates.</p>
+                <p>✶ A person always decides. Nobody is rejected automatically, and every match comes with its reasons.</p>
                 <p>✶ What you tell us about a role isn’t shared with anyone.</p>
                 <p>✶ We’re running a small number of pilots this autumn.</p>
               </div>
@@ -345,8 +349,8 @@ export default function Landing() {
             <details>
               <summary>Do you keep what I write?</summary>
               <p>
-                No. What you type is sent to our AI provider to produce your reading, and adjacent doesn’t save it. Close the
-                tab and it’s gone. The <Link href="/privacy">privacy note</Link> has the details.
+                No. What you type is sent to our AI provider to produce your reading, and adjacent doesn’t save it, unless you
+                choose “Let employers find me” at the end. Then you get a private link to see and delete what we keep. The <Link href="/privacy">privacy note</Link> has the details.
               </p>
             </details>
             <details>

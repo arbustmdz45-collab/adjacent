@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import CandidateChecks from "@/components/CandidateChecks";
 import Capabilities, { pad } from "@/components/Capabilities";
 import FieldCard from "@/components/FieldCard";
+import OptIn from "@/components/OptIn";
 import Steps from "@/components/Steps";
 import { getCapabilities, getFields, replaceField } from "@/lib/api";
 import type { Capability, Field, Gap, Rejection } from "@/lib/types";
@@ -358,6 +359,10 @@ export default function Tool() {
             </>
           )}
         </section>
+
+        {phase === "ready" && fields.length > 0 && (
+          <OptIn key={role} description={role} industry={industry} capabilities={capabilities} fields={fields} />
+        )}
 
         {/* Candidate check: built and working, kept off the screen while the product focuses on pivoting.
             Set SHOW_CANDIDATE_CHECK to true to bring it back. */}

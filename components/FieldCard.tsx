@@ -68,6 +68,17 @@ export default function FieldCard({ field, capabilities, busy, locked, onReject 
         <Meter strength={field.strength} />
       </div>
 
+      {field.proven && field.proven.hired > 0 && (
+        <p className="proven">
+          <b>Proven move</b>
+          <span>
+            {field.proven.hired} {field.proven.hired === 1 ? "person" : "people"} from {field.proven.from.toLowerCase()} got hired
+            into {field.proven.to.toLowerCase()} through adjacent
+            {field.proven.retained > 0 ? `, ${field.proven.retained} still there after 90 days` : ""}.
+          </span>
+        </p>
+      )}
+
       <div className="stack gap-10">
         <p className="eyebrow">Uses what you already do</p>
         {maps.map((m) => (

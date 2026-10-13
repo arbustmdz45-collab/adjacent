@@ -26,6 +26,8 @@ export type Field = {
   titles: string[]; // job titles to search for, as they appear in ads
   say_it: string[]; // CV lines: their real experience in the new field's vocabulary
   why_weak: string | null; // required when strength is "weak"
+  proven_move_id?: string | null; // set by the model when a proven move fits
+  proven?: { from: string; to: string; hired: number; retained: number } | null; // real counts, attached by the server
 };
 
 export type Gap = { capability_id: string; note: string } | null;
