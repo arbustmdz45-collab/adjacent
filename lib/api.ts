@@ -1,5 +1,7 @@
 import type {
   AnalyseRequest,
+  CandidateRequest,
+  CandidateResponse,
   CapabilitiesResponse,
   FieldsRequest,
   FieldsResponse,
@@ -23,6 +25,9 @@ export const getCapabilities = (role: string) =>
 
 export const getFields = (body: Omit<FieldsRequest, "step">) =>
   post<FieldsResponse>({ step: "fields", ...body });
+
+export const checkCandidate = (body: Omit<CandidateRequest, "step">) =>
+  post<CandidateResponse>({ step: "candidate", ...body });
 
 export const replaceField = (body: Omit<ReplaceRequest, "step">) =>
   post<ReplaceResponse>({ step: "replace", ...body });

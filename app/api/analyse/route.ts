@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import { SYSTEM, TOOLS, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
-import type { AnalyseRequest, Capability, Field } from "@/lib/types";
+import { SYSTEM, TOOLS, candidatePrompt, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
+import type { AnalyseRequest, CandidateResponse, Capability, Field } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -51,6 +51,28 @@ function clean(field: Field, caps: Capability[]): Field {
   };
 }
 
+const MAX_CANDIDATE_CHARS = 12000;
+const norm = (s: string) => s.toLowerCase().replace(/[\s"“”'‘’.,;:()\-–—]+/g, " ").trim();
+
+// Keep the check honest: one entry per capability, in order, and drop any
+// quote that isn't actually in the candidate's text.
+function checkAgainst(check: CandidateResponse["check"], caps: Capability[], text: string): CandidateResponse["check"] {
+  const source = norm(text);
+  const ids = new Set(caps.map((c) => c.id));
+  const coverage = caps.map((c) => {
+    const found = (check.coverage || []).find((x) => x.capability_id === c.id);
+    if (!found) return { capability_id: c.id, evidence: "not_shown" as const, quote: null, note: "This check didn't cover it. Ask about it in the interview." };
+    const quoteOk = found.quote && found.evidence !== "not_shown" && source.includes(norm(found.quote));
+    return { ...found, quote: quoteOk ? found.quote : null };
+  });
+  return {
+    ...check,
+    coverage,
+    questions: (check.questions || []).filter((q) => ids.has(q.capability_id)),
+    ramp: (check.ramp || []).filter((r) => ids.has(r.capability_id)),
+  };
+}
+
 async function ask<T>(tool: (typeof TOOLS)[keyof typeof TOOLS], prompt: string): Promise<T> {
   const client = new Anthropic(); // reads ANTHROPIC_API_KEY
   const res = await client.messages.create({
@@ -91,7 +113,7 @@ export async function POST(req: Request) {
 
     if (!validCapabilities(body.capabilities)) return bad("Capabilities are missing or malformed.");
     const industry = typeof body.industry === "string" && body.industry.trim() ? body.industry : "unknown";
-    const rejected = Array.isArray(body.rejected) ? body.rejected.slice(0, 20) : [];
+    const rejected = "rejected" in body && Array.isArray(body.rejected) ? body.rejected.slice(0, 20) : [];
 
     if (body.step === "fields") {
       const out = await ask<{ fields: Field[]; gap: { capability_id: string; note: string } | null }>(
@@ -103,6 +125,17 @@ export async function POST(req: Request) {
         fields: out.fields.map((f) => clean(f, body.capabilities)),
         gap: out.gap && ids.has(out.gap.capability_id) ? out.gap : null,
       });
+    }
+
+    if (body.step === "candidate") {
+      const text = typeof body.candidate === "string" ? body.candidate : "";
+      if (text.trim().length < 40 || text.length > MAX_CANDIDATE_CHARS)
+        return bad("Paste the candidate's CV or a few sentences on what they've done (max 12,000 characters).");
+      const out = await ask<CandidateResponse>(
+        TOOLS.candidate,
+        candidatePrompt(body.role, industry, body.capabilities, text),
+      );
+      return NextResponse.json({ check: checkAgainst(out.check, body.capabilities, text) });
     }
 
     if (body.step === "replace") {

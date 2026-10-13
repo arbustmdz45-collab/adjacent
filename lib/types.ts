@@ -50,7 +50,37 @@ export type ReplaceRequest = {
   rejected: Rejection[];
 };
 
-export type AnalyseRequest = CapabilitiesRequest | FieldsRequest | ReplaceRequest;
+// ---- Candidate check: one person's background against this role's capabilities ----
+
+export type Evidence = "shown" | "partly" | "not_shown";
+export type Verdict = "interview" | "conversation" | "not_enough";
+
+export type CandidateCheck = {
+  id: string;
+  label: string; // short, non-identifying: "Courier ops lead, about 4 years"
+  verdict: Verdict;
+  verdict_reason: string;
+  coverage: {
+    capability_id: string;
+    evidence: Evidence;
+    quote: string | null; // the candidate's own words that show it
+    note: string; // why that counts, or what's missing
+  }[];
+  questions: { capability_id: string; question: string; listen_for: string }[];
+  ramp: { capability_id: string; what: string; how: string; estimate: string }[];
+};
+
+export type CandidateRequest = {
+  step: "candidate";
+  role: string;
+  industry: string;
+  capabilities: Capability[];
+  candidate: string;
+};
+
+export type CandidateResponse = { check: Omit<CandidateCheck, "id"> };
+
+export type AnalyseRequest = CapabilitiesRequest | FieldsRequest | ReplaceRequest | CandidateRequest;
 
 export type CapabilitiesResponse = { industry: string; capabilities: Capability[] };
 export type FieldsResponse = { fields: Field[]; gap: Gap };

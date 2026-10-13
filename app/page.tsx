@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import CandidateChecks from "@/components/CandidateChecks";
 import Capabilities, { pad } from "@/components/Capabilities";
 import FieldCard from "@/components/FieldCard";
 import Steps from "@/components/Steps";
@@ -332,6 +333,10 @@ export default function Home() {
             </>
           )}
         </section>
+
+        {capabilities.length > 0 && (
+          <CandidateChecks key={role} role={role} industry={industry} capabilities={capabilities} locked={busy} />
+        )}
       </div>
     </main>
   );
