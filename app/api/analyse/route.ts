@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { limited } from "@/lib/rate-limit";
 import { CANDIDATE_TOOL, HIRING_SYSTEM, candidatePrompt } from "@/lib/hiring-prompt";
 import { SYSTEM, TOOLS, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
 import type { AnalyseRequest, CandidateResponse, Capability, Field } from "@/lib/types";
@@ -10,20 +11,7 @@ export const maxDuration = 60;
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 const MAX_ROLE_CHARS = 4000;
 
-// Best-effort limit per IP. On serverless each instance has its own memory,
-// so this stops casual abuse, not a determined attacker. Swap for a shared
-// store (e.g. Upstash) before opening it widely.
-const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS = Number(process.env.RATE_LIMIT_PER_10_MIN || 30);
-const hits = new Map<string, number[]>();
-
-function limited(ip: string) {
-  const now = Date.now();
-  const recent = (hits.get(ip) || []).filter((t) => now - t < WINDOW_MS);
-  recent.push(now);
-  hits.set(ip, recent);
-  return recent.length > MAX_REQUESTS;
-}
 
 function bad(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -96,8 +84,7 @@ async function ask<T>(tool: ToolDef, prompt: string, system: string = SYSTEM): P
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) return bad("Server is missing ANTHROPIC_API_KEY.", 500);
 
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (limited(ip)) return bad("Too many requests. Wait a few minutes and try again.", 429);
+  if (limited("analyse", req, MAX_REQUESTS)) return bad("Too many requests. Wait a few minutes and try again.", 429);
 
   let body: AnalyseRequest;
   try {

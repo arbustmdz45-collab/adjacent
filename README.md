@@ -25,15 +25,37 @@ There are no accounts, no saving and no history. To try a different job, start a
 ## How it's built
 
 ```
-lib/prompt.ts             Everything the model is told for the pivoting flow: system prompt, per-step prompts, output schemas
+app/page.tsx              Landing page. Its hero textarea starts the tool
+app/try/page.tsx          The tool: empty, thinking, result
+app/privacy/page.tsx      Plain-language privacy note (have it reviewed before launch)
+app/api/analyse/route.ts  The tool's API route. Steps: capabilities, fields, replace (+ hidden candidate)
+app/api/subscribe/route.ts  Newsletter and employer pilot requests, forwarded to LEADS_WEBHOOK_URL
+lib/prompt.ts             Everything the model is told for the pivoting flow
 lib/hiring-prompt.ts      Employer-side candidate check (hidden for now)
 lib/types.ts              The shape of a capability, a field, a gap
-app/api/analyse/route.ts  The one API route. Four steps: capabilities, fields, replace, candidate
-app/page.tsx              The one screen: empty, thinking, result
-components/               Capability list, field card, thinking steps
+components/Tool.tsx       The tool's screen and state
+components/landing/       Hero start box and the two lead forms
+app/globals.css           The whole look: tokens at the top, landing, then the tool
 ```
 
 The model answers through forced tool calls, so its output always fits the schema. To change how the product thinks, edit `lib/prompt.ts`. To add something to each field card, change `lib/types.ts`, the schema in `lib/prompt.ts`, and `components/FieldCard.tsx`.
+
+### Where leads go
+
+There's no database. Each newsletter sign-up and pilot request is POSTed as JSON to `LEADS_WEBHOOK_URL`. The quickest setup is a Google Sheet:
+
+1. Create a sheet, then Extensions → Apps Script.
+2. Paste:
+   ```js
+   function doPost(e) {
+     const d = JSON.parse(e.postData.contents);
+     SpreadsheetApp.getActiveSheet().appendRow([d.submitted_at, d.type, d.email, d.company || "", d.role || "", d.free_email_domain || ""]);
+     return ContentService.createTextOutput('{"ok":true}').setMimeType(ContentService.MimeType.JSON);
+   }
+   ```
+3. Deploy → New deployment → Web app, access "Anyone". Use the URL it gives you as `LEADS_WEBHOOK_URL`.
+
+A Zapier or Make webhook, or a Formspree endpoint, works the same way. Until it's set, the forms tell people sign-ups aren't switched on yet, so nothing is silently lost.
 
 ## Run locally
 
@@ -46,7 +68,7 @@ npm run dev
 ## Deploy
 
 1. Import this repo at vercel.com/new.
-2. Add `ANTHROPIC_API_KEY` under Environment Variables. `ANTHROPIC_MODEL` and `RATE_LIMIT_PER_10_MIN` are optional.
+2. Add the environment variables from `.env.example`: `ANTHROPIC_API_KEY`, `LEADS_WEBHOOK_URL` and `NEXT_PUBLIC_SITE_URL` at least.
 3. Deploy.
 
 The rate limit is per server instance and held in memory. It stops casual abuse but won't hold up under real traffic, so move it to a shared store such as Upstash Redis before you share the link widely.
