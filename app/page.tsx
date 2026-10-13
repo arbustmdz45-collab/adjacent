@@ -10,6 +10,8 @@ import type { Capability, Field, Gap, Rejection } from "@/lib/types";
 
 type Phase = "empty" | "reading" | "matching" | "ready";
 
+const SHOW_CANDIDATE_CHECK = false;
+
 export default function Home() {
   const [draft, setDraft] = useState("");
   const [role, setRole] = useState("");
@@ -334,7 +336,9 @@ export default function Home() {
           )}
         </section>
 
-        {capabilities.length > 0 && (
+        {/* Candidate check: built and working, kept off the screen while the product focuses on pivoting.
+            Set SHOW_CANDIDATE_CHECK to true to bring it back. */}
+        {SHOW_CANDIDATE_CHECK && capabilities.length > 0 && (
           <CandidateChecks key={role} role={role} industry={industry} capabilities={capabilities} locked={busy} />
         )}
       </div>

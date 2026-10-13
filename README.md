@@ -10,7 +10,7 @@ The result can be changed in place:
 - **Reject a field.** Say why if you like, and only that field is replaced. Rejected fields aren't suggested again for that role.
 - **Change the excluded industry** if the model guessed it wrong.
 
-**Check someone who looks wrong on paper.** Paste a CV, or a few lines on what a person has done. You see, capability by capability, whether their background shows it, in their own words. Then you get interview questions to verify what's partial or missing, and a rough training plan to close the gaps. The verdict is one of "worth an interview", "worth a short call first" or "not enough evidence yet". It never says a person is unsuitable. Quotes are checked against the pasted text, and any that don't appear in it are dropped. Names, age and other personal details are ignored.
+**Candidate check (built, currently hidden).** Paste a CV, or a few lines on what a person has done. You see, capability by capability, whether their background shows it, in their own words. Then you get interview questions to verify what's partial or missing, and a rough training plan to close the gaps. The verdict is one of "worth an interview", "worth a short call first" or "not enough evidence yet". It never says a person is unsuitable. Quotes are checked against the pasted text, and any that don't appear in it are dropped. Names, age and other personal details are ignored.
 
 There are no accounts, no saving and no history. To run two roles, paste twice.
 
