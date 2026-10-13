@@ -121,6 +121,12 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, a:focus-visib
 .strength.weak { color: var(--weak); }
 .eyebrow.weak { color: var(--weak); }
 
+/* pivot extras */
+.titles { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.titles li { font-size: 15px; line-height: 1.4; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); }
+.say-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: baseline; }
+.say-line .text-button { padding: 0 4px; }
+
 /* candidate checks */
 .strong-text { font-weight: 500; color: var(--ink); }
 .muted-strong { color: var(--muted); }

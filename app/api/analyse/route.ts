@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import { SYSTEM, TOOLS, candidatePrompt, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
+import { CANDIDATE_TOOL, HIRING_SYSTEM, candidatePrompt } from "@/lib/hiring-prompt";
+import { SYSTEM, TOOLS, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
 import type { AnalyseRequest, CandidateResponse, Capability, Field } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -47,6 +48,8 @@ function clean(field: Field, caps: Capability[]): Field {
   return {
     ...field,
     maps: (field.maps || []).filter((m) => ids.has(m.capability_id)),
+    titles: Array.isArray(field.titles) ? field.titles.filter((t) => typeof t === "string").slice(0, 4) : [],
+    say_it: Array.isArray(field.say_it) ? field.say_it.filter((t) => typeof t === "string").slice(0, 3) : [],
     why_weak: field.strength === "weak" ? field.why_weak || null : null,
   };
 }
@@ -73,12 +76,14 @@ function checkAgainst(check: CandidateResponse["check"], caps: Capability[], tex
   };
 }
 
-async function ask<T>(tool: (typeof TOOLS)[keyof typeof TOOLS], prompt: string): Promise<T> {
+type ToolDef = { name: string; description: string; input_schema: unknown };
+
+async function ask<T>(tool: ToolDef, prompt: string, system: string = SYSTEM): Promise<T> {
   const client = new Anthropic(); // reads ANTHROPIC_API_KEY
   const res = await client.messages.create({
     model: MODEL,
     max_tokens: 4000,
-    system: SYSTEM,
+    system,
     tools: [tool as unknown as Anthropic.Tool],
     tool_choice: { type: "tool", name: tool.name },
     messages: [{ role: "user", content: prompt }],
@@ -100,7 +105,7 @@ export async function POST(req: Request) {
   } catch {
     return bad("Invalid JSON.");
   }
-  if (!validRole(body?.role)) return bad("Describe the role in at least a sentence (max 4,000 characters).");
+  if (!validRole(body?.role)) return bad("Describe what you do in at least a sentence (max 4,000 characters).");
 
   try {
     if (body.step === "capabilities") {
@@ -132,8 +137,9 @@ export async function POST(req: Request) {
       if (text.trim().length < 40 || text.length > MAX_CANDIDATE_CHARS)
         return bad("Paste the candidate's CV or a few sentences on what they've done (max 12,000 characters).");
       const out = await ask<CandidateResponse>(
-        TOOLS.candidate,
+        CANDIDATE_TOOL,
         candidatePrompt(body.role, industry, body.capabilities, text),
+        HIRING_SYSTEM,
       );
       return NextResponse.json({ check: checkAgainst(out.check, body.capabilities, text) });
     }

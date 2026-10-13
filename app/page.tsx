@@ -108,7 +108,7 @@ export default function Home() {
           }}
         >
           <label htmlFor="role" className="label">
-            Describe what the role actually involves day to day
+            Describe what you actually do all day in your current job
           </label>
           <textarea
             id="role"
@@ -116,11 +116,11 @@ export default function Home() {
             rows={9}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Answers emergency calls, decides which ambulance goes where, talks callers through CPR until the crew arrives…"
+            placeholder="I run the floor at a busy restaurant on weekends: I seat walk-ins when we're full, calm down angry tables, and decide which orders the kitchen does first when we fall behind…"
           />
           <div>
             <button className="button" type="submit" disabled={draft.trim().length < 20}>
-              Find the capabilities
+              Find where you could go
             </button>
           </div>
         </form>
@@ -131,10 +131,10 @@ export default function Home() {
   const roleBlock = (
     <section className="stack gap-12">
       <div className="row">
-        <p className="eyebrow">The role you described</p>
+        <p className="eyebrow">What you described</p>
         {!busy && (
           <button className="link" style={{ fontSize: 15 }} type="button" onClick={restart}>
-            Describe another role
+            Start again
           </button>
         )}
       </div>
@@ -162,7 +162,7 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <Steps steps={[{ text: "Separating what the work involves from what the job is called", done: false }]} />
+              <Steps steps={[{ text: "Separating what you actually do from what your job is called", done: false }]} />
             )}
           </div>
         </div>
@@ -178,10 +178,10 @@ export default function Home() {
 
         <section className="stack gap-40">
           <header className="stack gap-10">
-            <h2 className="h2">What this work requires</h2>
+            <h2 className="h2">What you can already do</h2>
             <p className="sub">
-              {capabilities.length} activities, described as what the person actually does. If one is wrong or missing,
-              change it and re-match.
+              {capabilities.length} things your work shows you can do, written as activities, not job titles. If one is
+              wrong or missing, change it and look again.
             </p>
           </header>
           <Capabilities
@@ -200,10 +200,10 @@ export default function Home() {
 
         <section className="stack gap-40">
           <header className="stack gap-10">
-            <h2 className="h2">Where this capability already exists</h2>
+            <h2 className="h2">Where you could go</h2>
             <p className="sub">
-              Three fields outside {industry ? industry.toLowerCase() : "this industry"}. Each match comes with its
-              reasoning, so you can disagree with it.
+              Three fields outside {industry ? industry.toLowerCase() : "your industry"} that need what you already do.
+              Each one says why, and what you&apos;d still have to learn, so you can judge it yourself.
             </p>
             {!busy &&
               (editingIndustry ? (
@@ -219,7 +219,7 @@ export default function Home() {
                   }}
                 >
                   <label className="stack gap-8">
-                    <span className="small-label">Industry to exclude</span>
+                    <span className="small-label">Your current industry (it's left out of the suggestions)</span>
                     <input
                       className="input"
                       value={industryDraft}
@@ -246,7 +246,7 @@ export default function Home() {
                       setEditingIndustry(true);
                     }}
                   >
-                    Wrong industry? Change what&apos;s excluded
+                    Wrong industry? Change it
                   </button>
                 </div>
               ))}
@@ -254,7 +254,7 @@ export default function Home() {
 
           {stale && !busy && (
             <div className="notice">
-              <p>You changed what this work requires. The fields below were matched to the earlier version.</p>
+              <p>You changed what you can do. The fields below were found for the earlier version.</p>
               <div>
                 <button
                   className="button"
@@ -264,7 +264,7 @@ export default function Home() {
                     match(capabilities, industry, rejected);
                   }}
                 >
-                  Re-match fields
+                  Look again
                 </button>
               </div>
             </div>
@@ -291,13 +291,13 @@ export default function Home() {
                 <Steps
                   steps={[
                     rematching
-                      ? { text: "Read your edited list of what the work requires", done: true }
+                      ? { text: "Read your edited list of what you can do", done: true }
                       : {
-                          text: `Found ${capabilities.length} things this work demands, each written as an activity`,
+                          text: `Found ${capabilities.length} things your work shows you can do, each written as an activity`,
                           done: true,
                         },
                     {
-                      text: `Looking for fields outside ${industry.toLowerCase() || "this industry"} where people already do these things, and checking which matches are thin`,
+                      text: `Looking for fields outside ${industry.toLowerCase() || "your industry"} that need these things, and checking which moves are realistic`,
                       done: false,
                     },
                   ]}
@@ -319,7 +319,7 @@ export default function Home() {
 
               {gap && gapIndex >= 0 && (
                 <aside className="stack gap-8" style={{ borderTop: "1px solid var(--rule)", paddingTop: 32 }}>
-                  <p className="eyebrow">Not covered well anywhere</p>
+                  <p className="eyebrow">Not used by any of these</p>
                   <p className="prose">
                     <span className="num">{pad(gapIndex + 1)}</span>&nbsp;&nbsp;{gap.note}
                   </p>
@@ -328,8 +328,7 @@ export default function Home() {
 
               {rejected.length > 0 && (
                 <p className="quiet" style={{ fontSize: 15 }}>
-                  Ruled out: {rejected.map((r) => r.field).join(", ")}. These won&apos;t be suggested again for this
-                  role.
+                  You said no to: {rejected.map((r) => r.field).join(", ")}. These won&apos;t come up again.
                 </p>
               )}
             </>

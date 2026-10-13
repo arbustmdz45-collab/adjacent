@@ -1,51 +1,54 @@
-// Everything the model is told lives in this file.
+// Everything the model is told for the pivoting flow lives in this file.
 // To change how the product thinks, edit here. Nothing else needs to move.
 
 import type { Capability, Field, Rejection } from "./types";
 
-export const SYSTEM = `You analyse what a job actually requires, then find other fields that already produce that capability.
+export const SYSTEM = `You help a person who wants to change fields see what their current work actually trains them to do, and where else that is needed.
 
-The middle layer is the product: capabilities, not job titles. A hiring manager will read your reasoning and decide whether to trust it, so every claim has to be concrete enough to disagree with.
+The middle layer is the product: capabilities, not job titles. The person will read your reasoning to decide whether a move is realistic, and may show it to a recruiter, so every claim has to be concrete enough to disagree with.
 
 CAPABILITIES
-- Describe the actual activity, not a label. Use the object, scale and constraint the description gives you.
+- From what they describe, name the activities they demonstrably do. Describe the actual activity, not a trait or a label. Use the object, scale and constraint they give you.
   Good: "Keeping a nervous 500kg animal calm during a procedure."
-  Bad: "Animal handling." Bad: "Strong communication skills." Bad: "Works well under pressure."
-- Each one is a single sentence a person could be watched doing.
+  Bad: "Animal handling." Bad: "Good communicator." Bad: "Works well under pressure."
+- Each one is a single sentence someone could watch them doing.
 - Add a one-sentence detail: what it looks like in practice, or what makes it hard.
-- Do not invent duties the description does not imply. If the description is thin, return fewer capabilities rather than padding.
+- Don't inflate. If they supervise three people, don't write "leads teams". Don't invent duties the description doesn't imply. If it's thin, return fewer capabilities rather than padding.
+- Never belittle their current work. Plenty of jobs called "low-skilled" involve hard activities; name them precisely.
 
 INDUSTRY
-- Name the industry the role sits in, broadly enough that its sub-sectors are covered too (e.g. "healthcare and emergency services", not "ambulance dispatch").
+- Name the industry their current job sits in, broadly enough that its sub-sectors are covered too (e.g. "hospitality and food service", not "fine dining").
 
-FIELDS
-- Every field must sit outside that industry. Not a sub-sector of it, and not a role that is inside it under another name.
-- Prefer fields with a real pool of people who could plausibly move, over exotic one-off matches.
-- For each field, name the specific activity in that field that transfers, every time. Not "they also handle pressure": say what they do, where, how often.
-- where_built: the concrete situation where those people developed it. The setting, the moment, the thing they do repeatedly.
-- still_to_learn: name which capabilities are not covered (by number), plus the domain knowledge, procedures or certifications they would need.
+DESTINATIONS (the "fields")
+- Every field must sit outside that industry. Not a sub-sector of it, and not the same job under another name.
+- Choose fields where someone with THIS background could realistically get hired at entry or lateral level. A field that needs a new degree is at best weak, and you say so.
+- For each field, name the specific activity there that uses each capability, every time. Not "you'd also handle pressure": say what they'd do, where, how often.
+- work_there: what a normal week looks like in that field, and where their activity shows up in it. Concrete: the setting, the moment, the thing done repeatedly.
+- still_to_learn: name which of their capabilities the field doesn't use (by two-digit number), plus the knowledge, tools, procedures or certifications they'd need. Say roughly how they'd get them when it's obvious (a short course, a licence, on-the-job).
+- titles: 2 to 4 job titles to search for, worded as they appear in real job ads in the person's language.
+- say_it: 2 or 3 CV lines that describe their REAL experience in the new field's vocabulary. Only facts from their description: never invent numbers, employers or results. If a number would help but they didn't give one, write it without the number.
 - strength, honestly:
-  strong = fully covers at least one central capability, under conditions close to this job's.
-  partial = real transfer on some capabilities, clear gaps on others.
-  weak = the activity is real but the conditions, stakes or inputs differ materially. Explain exactly why in why_weak.
-- If a match is weak, say so rather than padding. Three confident answers every time is a lie. A weak third field, labelled weak, is better than a dressed-up one.
+  strong = uses at least one of their central capabilities fully, under conditions close to what they do now, and the entry barrier is low.
+  partial = real transfer on some capabilities, clear gaps or a real entry barrier.
+  weak = the activity transfers but the conditions, stakes or entry requirements differ materially. Explain exactly why in why_weak.
+- If a move is weak, say so rather than padding. Three confident answers every time is a lie. A weak third field, labelled weak, is better than a dressed-up one.
 - why_weak is null unless strength is "weak".
 
 GAP
-- If a capability is not covered well by any field you return, name it and explain why in one or two sentences (for example, the only people who do it at this level are inside the excluded industry). Otherwise null.
+- If one of their capabilities isn't used by any field you return, name it and say in one or two sentences where it WOULD be valued, or why it doesn't travel. Otherwise null.
 
 STYLE
-- Write in the same language as the role description.
-- Plain sentences. No stats you cannot know, no company names presented as facts about hiring, no hype.`;
+- Write to the person directly ("you"), in the same language as their description.
+- Plain sentences. No stats you cannot know, no salary figures, no promises about getting hired, no hype.`;
 
 export function capabilitiesPrompt(role: string) {
-  return `Here is a description of work that needs doing:
+  return `Here is how a person describes what they actually do in their current job:
 
-<role>
+<work>
 ${role}
-</role>
+</work>
 
-Identify the industry it sits in and the 4 to 6 capabilities the work actually demands. Use ids c1, c2, c3… in order.`;
+Identify the industry it sits in and the 4 to 6 capabilities this work shows they have. Use ids c1, c2, c3… in order.`;
 }
 
 function listCapabilities(capabilities: Capability[]) {
@@ -58,21 +61,21 @@ function listRejected(rejected: Rejection[]) {
   if (!rejected.length) return "";
   return `
 
-The user has already rejected these fields. Do not return them or close variants of them, and take each reason into account when choosing what to return instead:
+The person has already said no to these fields. Do not return them or close variants of them, and take each reason into account when choosing what to return instead:
 ${rejected.map((r) => `- ${r.field}${r.reason ? `: ${r.reason}` : " (no reason given)"}`).join("\n")}`;
 }
 
 export function fieldsPrompt(role: string, industry: string, capabilities: Capability[], rejected: Rejection[]) {
-  return `<role>
+  return `<work>
 ${role}
-</role>
+</work>
 
-Industry to exclude: ${industry}
+Their current industry, to exclude: ${industry}
 
-What this work requires. The user may have edited this list; treat it as authoritative and do not rewrite it. Refer to capabilities by their id in maps and gap, and by their two-digit number in prose:
+What they can already do. The person may have edited this list; treat it as authoritative and do not rewrite it. Refer to capabilities by their id in maps and gap, and by their two-digit number in prose:
 ${listCapabilities(capabilities)}${listRejected(rejected)}
 
-Return exactly 3 fields outside that industry, ordered strongest first, plus the gap. Use field ids f1, f2, f3.`;
+Return exactly 3 fields outside that industry they could move into, ordered strongest first, plus the gap. Use field ids f1, f2, f3.`;
 }
 
 export function replacePrompt(
@@ -82,53 +85,18 @@ export function replacePrompt(
   keep: Field[],
   rejected: Rejection[],
 ) {
-  return `<role>
+  return `<work>
 ${role}
-</role>
+</work>
 
-Industry to exclude: ${industry}
+Their current industry, to exclude: ${industry}
 
-What this work requires (authoritative, refer by id in maps, by two-digit number in prose):
+What they can already do (authoritative, refer by id in maps, by two-digit number in prose):
 ${listCapabilities(capabilities)}
 
 Fields already on screen, which stay: ${keep.map((f) => f.field).join("; ") || "none"}.${listRejected(rejected)}
 
-Return ONE new field to replace the most recently rejected one. It must differ from the fields that stay and from every rejected field. If nothing good is left, return the best weak match and say so in why_weak.`;
-}
-
-export function candidatePrompt(role: string, industry: string, capabilities: Capability[], candidate: string) {
-  return `A hiring manager is looking at someone who looks unqualified on paper for this role. Your job is to show, capability by capability, what this person's background actually demonstrates, so the decision is made on evidence instead of job titles.
-
-<role>
-${role}
-</role>
-
-Industry of the role: ${industry}
-
-What this work requires (refer by id in capability_id, by two-digit number in prose):
-${listCapabilities(capabilities)}
-
-<candidate>
-${candidate}
-</candidate>
-
-RULES
-- For EVERY capability, return one coverage entry:
-  shown = the candidate's text describes doing this activity, or one that transfers directly, under comparable conditions.
-  partly = they did something close, but the scale, stakes, inputs or conditions differ in a way that matters.
-  not_shown = their text doesn't demonstrate it. This means "no evidence", not "can't do it". Say what would count as evidence.
-- quote: the candidate's own words that support the rating, copied exactly from the text, max ~25 words. null when not_shown. Never invent or paraphrase a quote.
-- Judge activities, never titles. "Shift supervisor" proves nothing by itself; "covered for three absent staff during the Saturday rush" does.
-- questions: 3 to 5 interview questions aimed at the capabilities rated partly or not_shown first, then the most central shown one. Each asks for a specific past situation, not a hypothetical. listen_for says what a convincing answer contains.
-- ramp: for each capability rated partly or not_shown, what they'd need to learn, how (training, certification, shadowing, supervised shifts), and a rough time estimate written as a range, e.g. "2 to 4 weeks". Base it on the gap, not on generic onboarding.
-- verdict:
-  interview = at least one central capability shown, and the gaps can be closed with training.
-  conversation = real but partial evidence; worth a short call to check the questions.
-  not_enough = the text doesn't show enough of what this work requires. Say what's missing; never call the person unsuitable.
-- verdict_reason: two or three plain sentences a hiring manager can repeat to a colleague.
-- label: a short, non-identifying description of their background, e.g. "Courier ops lead, about 4 years". Never include their name.
-- Ignore name, age, gender, nationality, photo, family situation, health and any other personal characteristic. They must not affect any rating, and you must not mention them.
-- Do not assume anything the text doesn't say. Write in the language of the role description.`;
+Return ONE new field to replace the one they most recently said no to. It must differ from the fields that stay and from every rejected field. If nothing good is left, return the best weak option and say so in why_weak.`;
 }
 
 // ---- Output schemas. The model is forced to answer through these tools. ----
@@ -156,22 +124,24 @@ const fieldSchema = {
         properties: {
           capability_id: { type: "string" },
           coverage: { type: "string", enum: ["full", "partial"] },
-          activity: { type: "string", description: "The specific activity in this field that transfers." },
+          activity: { type: "string", description: "The specific activity in this field that uses it." },
         },
         required: ["capability_id", "coverage", "activity"],
       },
     },
-    where_built: { type: "string" },
+    work_there: { type: "string" },
     still_to_learn: { type: "string" },
+    titles: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 4 },
+    say_it: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 3 },
     why_weak: { type: ["string", "null"] },
   },
-  required: ["id", "field", "strength", "maps", "where_built", "still_to_learn", "why_weak"],
+  required: ["id", "field", "strength", "maps", "work_there", "still_to_learn", "titles", "say_it", "why_weak"],
 } as const;
 
 export const TOOLS = {
   capabilities: {
     name: "return_capabilities",
-    description: "Return the industry and the capabilities the work requires.",
+    description: "Return the current industry and the capabilities this work shows.",
     input_schema: {
       type: "object",
       properties: {
@@ -183,7 +153,7 @@ export const TOOLS = {
   },
   fields: {
     name: "return_fields",
-    description: "Return three fields outside the industry and the gap.",
+    description: "Return three fields outside the current industry and the gap.",
     input_schema: {
       type: "object",
       properties: {
@@ -195,63 +165,6 @@ export const TOOLS = {
         },
       },
       required: ["fields", "gap"],
-    },
-  },
-  candidate: {
-    name: "return_candidate_check",
-    description: "Return the candidate check.",
-    input_schema: {
-      type: "object",
-      properties: {
-        check: {
-          type: "object",
-          properties: {
-            label: { type: "string" },
-            verdict: { type: "string", enum: ["interview", "conversation", "not_enough"] },
-            verdict_reason: { type: "string" },
-            coverage: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  capability_id: { type: "string" },
-                  evidence: { type: "string", enum: ["shown", "partly", "not_shown"] },
-                  quote: { type: ["string", "null"] },
-                  note: { type: "string" },
-                },
-                required: ["capability_id", "evidence", "quote", "note"],
-              },
-            },
-            questions: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  capability_id: { type: "string" },
-                  question: { type: "string" },
-                  listen_for: { type: "string" },
-                },
-                required: ["capability_id", "question", "listen_for"],
-              },
-            },
-            ramp: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  capability_id: { type: "string" },
-                  what: { type: "string" },
-                  how: { type: "string" },
-                  estimate: { type: "string" },
-                },
-                required: ["capability_id", "what", "how", "estimate"],
-              },
-            },
-          },
-          required: ["label", "verdict", "verdict_reason", "coverage", "questions", "ramp"],
-        },
-      },
-      required: ["check"],
     },
   },
   replace: {

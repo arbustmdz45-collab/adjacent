@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Capability, Field, Strength } from "@/lib/types";
 import { pad } from "./Capabilities";
 
-const LABEL: Record<Strength, string> = { strong: "Strong match", partial: "Partial match", weak: "Weak match" };
+const LABEL: Record<Strength, string> = { strong: "Strong fit", partial: "Partial fit", weak: "Weak fit" };
 const FILLED: Record<Strength, number> = { strong: 3, partial: 2, weak: 1 };
 
 function Meter({ strength }: { strength: Strength }) {
@@ -21,6 +21,30 @@ function Meter({ strength }: { strength: Strength }) {
   );
 }
 
+function CopyLine({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="say-line">
+      <p className="prose">{text}</p>
+      <button
+        className="text-button"
+        type="button"
+        onClick={() =>
+          navigator.clipboard
+            ?.writeText(text)
+            .then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            })
+            .catch(() => {})
+        }
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
+  );
+}
+
 type Props = {
   field: Field;
   capabilities: Capability[];
@@ -33,7 +57,9 @@ export default function FieldCard({ field, capabilities, busy, locked, onReject 
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const index = (id: string) => capabilities.findIndex((c) => c.id === id);
-  const maps = field.maps.filter((m) => index(m.capability_id) >= 0).sort((a, b) => index(a.capability_id) - index(b.capability_id));
+  const maps = field.maps
+    .filter((m) => index(m.capability_id) >= 0)
+    .sort((a, b) => index(a.capability_id) - index(b.capability_id));
 
   return (
     <article className={`field ${busy ? "busy" : ""}`} aria-busy={busy}>
@@ -43,7 +69,7 @@ export default function FieldCard({ field, capabilities, busy, locked, onReject 
       </div>
 
       <div className="stack gap-10">
-        <p className="eyebrow">Maps to</p>
+        <p className="eyebrow">Uses what you already do</p>
         {maps.map((m) => (
           <p className="map-line" key={m.capability_id}>
             <span className="num">{pad(index(m.capability_id) + 1)}</span>&nbsp;&nbsp;
@@ -53,23 +79,43 @@ export default function FieldCard({ field, capabilities, busy, locked, onReject 
       </div>
 
       <div className="stack gap-8">
-        <p className="eyebrow">Where they built it</p>
-        <p className="prose">{field.where_built}</p>
+        <p className="eyebrow">What the work looks like there</p>
+        <p className="prose">{field.work_there}</p>
       </div>
 
       {field.strength === "weak" && field.why_weak && (
         <div className="stack gap-8">
-          <p className="eyebrow weak">Why this is weak</p>
+          <p className="eyebrow weak">Why this is a weak fit</p>
           <p className="prose">{field.why_weak}</p>
         </div>
       )}
 
       <div className="stack gap-8">
-        <p className="eyebrow">What they&apos;d still need to learn</p>
+        <p className="eyebrow">What you&apos;d still need to learn</p>
         <p className="prose">{field.still_to_learn}</p>
       </div>
 
-      {busy && <p className="quiet">Finding a field to replace this one…</p>}
+      {field.titles.length > 0 && (
+        <div className="stack gap-10">
+          <p className="eyebrow">Search for</p>
+          <ul className="titles">
+            {field.titles.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {field.say_it.length > 0 && (
+        <div className="stack gap-10">
+          <p className="eyebrow">How to say it on your CV</p>
+          {field.say_it.map((line, i) => (
+            <CopyLine key={i} text={line} />
+          ))}
+        </div>
+      )}
+
+      {busy && <p className="quiet">Finding another field for you…</p>}
 
       {!locked &&
         !busy &&
@@ -84,18 +130,18 @@ export default function FieldCard({ field, capabilities, busy, locked, onReject 
             }}
           >
             <label className="stack gap-8">
-              <span className="small-label">What&apos;s wrong with this match? (optional, it shapes the replacement)</span>
+              <span className="small-label">Why not this one? (optional, it shapes the next suggestion)</span>
               <input
                 className="input"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. too few of these people in Spain, or the training gap is too long"
+                placeholder="e.g. I can't take a pay cut, or I don't want to work nights"
                 autoFocus
               />
             </label>
             <div className="actions">
               <button className="button" type="submit">
-                Replace this field
+                Show me another
               </button>
               <button className="text-button" type="button" onClick={() => setRejecting(false)}>
                 Cancel
@@ -105,7 +151,7 @@ export default function FieldCard({ field, capabilities, busy, locked, onReject 
         ) : (
           <div>
             <button className="text-button" type="button" onClick={() => setRejecting(true)}>
-              Not a fit? Replace it
+              Not for me? Show another
             </button>
           </div>
         ))}

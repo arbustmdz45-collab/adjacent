@@ -37,7 +37,7 @@ function Editor({
       }}
     >
       <label className="stack gap-8">
-        <span className="small-label">What the person actually does</span>
+        <span className="small-label">What you actually do</span>
         <textarea className="textarea" rows={2} value={activity} onChange={(e) => setActivity(e.target.value)} autoFocus />
       </label>
       <label className="stack gap-8">
@@ -117,7 +117,7 @@ export default function Capabilities({ capabilities, locked, onUpdate, onRemove,
         ) : (
           <div>
             <button className="text-button" type="button" onClick={() => setAdding(true)}>
-              Add something the work requires that's missing
+              Add something you do that's missing
             </button>
           </div>
         ))}

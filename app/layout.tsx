@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "adjacent",
-  description: "What a job actually requires, and the fields outside its industry where people already do it.",
+  description: "Describe what you do all day. See what it trains you for, and the fields outside your industry that need it.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

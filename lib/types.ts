@@ -13,7 +13,7 @@ export type Strength = "strong" | "partial" | "weak";
 export type Mapping = {
   capability_id: string;
   coverage: Coverage;
-  activity: string; // the specific activity in the other field that transfers
+  activity: string; // the specific activity in the new field that uses this capability
 };
 
 export type Field = {
@@ -21,8 +21,10 @@ export type Field = {
   field: string;
   strength: Strength;
   maps: Mapping[];
-  where_built: string;
+  work_there: string; // what a normal week looks like there, and where their activity shows up
   still_to_learn: string;
+  titles: string[]; // job titles to search for, as they appear in ads
+  say_it: string[]; // CV lines: their real experience in the new field's vocabulary
   why_weak: string | null; // required when strength is "weak"
 };
 
