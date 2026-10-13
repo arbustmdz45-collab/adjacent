@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { notify } from "@/lib/notify";
-import { limited } from "@/lib/rate-limit";
+import { crossSite, limited } from "@/lib/rate-limit";
 import { createCandidate } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -14,6 +14,7 @@ function bad(error: string, status = 400) {
 
 // "Let employers find me": saves someone's reading to the pool, with their explicit consent.
 export async function POST(req: Request) {
+  if (crossSite(req)) return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   if (limited("pool", req, 5)) return bad("Too many attempts. Wait a few minutes and try again.", 429);
   let body: Record<string, unknown>;
   try {
@@ -47,7 +48,8 @@ export async function POST(req: Request) {
 
   try {
     const { token } = await createCandidate({ name, email, city, description, industry, capabilities, interests });
-    await notify({ type: "candidate_joined", name, email, city, industry, interests });
+    // Minimal notice: no name or email leaves the database.
+    await notify({ type: "candidate_joined", industry, interests });
     return NextResponse.json({ ok: true, manage: `/me/${token}` });
   } catch (err) {
     console.error(err);

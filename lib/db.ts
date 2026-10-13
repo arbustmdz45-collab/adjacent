@@ -2,6 +2,7 @@
 // Production: set DATABASE_URL (Neon, Supabase or Vercel Postgres all work).
 // Local development without DATABASE_URL: an embedded Postgres (PGlite) in .data/.
 import "server-only";
+import { createHash } from "node:crypto";
 
 type Row = Record<string, unknown>;
 type Runner = (text: string, params?: unknown[]) => Promise<Row[]>;
@@ -17,8 +18,10 @@ create table if not exists candidates (
   capabilities jsonb not null default '[]',
   interests jsonb not null default '[]',
   status text not null default 'active',
-  manage_token text not null unique,
+  manage_hash text not null unique,
+  consent_version text not null,
   consent_at timestamptz not null default now(),
+  expires_at timestamptz not null,
   created_at timestamptz not null default now()
 );
 create table if not exists roles (
@@ -35,7 +38,15 @@ create table if not exists roles (
   ad jsonb not null default '{}',
   questions jsonb not null default '[]',
   status text not null default 'open',
+  closed_at timestamptz,
   created_at timestamptz not null default now()
+);
+create table if not exists outcomes (
+  id text primary key,
+  from_industry text not null,
+  to_field text not null,
+  result text not null,
+  month text not null
 );
 create table if not exists matches (
   id text primary key,
@@ -47,6 +58,7 @@ create table if not exists matches (
   employer_interest boolean not null default false,
   note text not null default '',
   hired_at timestamptz,
+  outcome_id text,
   updated_at timestamptz not null default now(),
   unique (role_id, candidate_id)
 );
@@ -58,7 +70,8 @@ async function connect(): Promise<Runner> {
   const url = process.env.DATABASE_URL;
   if (url) {
     const postgres = (await import("postgres")).default;
-    const sql = postgres(url, { max: 3, idle_timeout: 20, prepare: false });
+    const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
+    const sql = postgres(url, { max: 3, idle_timeout: 20, prepare: false, ssl: local ? false : "require" });
     const run: Runner = async (text, params = []) => (await sql.unsafe(text, params as never[])) as unknown as Row[];
     for (const stmt of SCHEMA.split(";").map((s) => s.trim()).filter(Boolean)) await run(stmt);
     return run;
@@ -77,6 +90,11 @@ export async function q<T = Row>(text: string, params: unknown[] = []): Promise<
 
 export function newId(prefix: string) {
   return `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
+}
+
+// Private links are bearer secrets: we store only their SHA-256, never the link itself.
+export function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 export function newToken() {

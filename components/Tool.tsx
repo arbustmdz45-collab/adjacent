@@ -342,6 +342,10 @@ export default function Tool() {
                 />
               ))}
 
+              <p className="small-label">
+                Written by AI from what you described. Check it against what you know about yourself before you use it.
+              </p>
+
               {gap && gapIndex >= 0 && (
                 <aside className="stack gap-8" style={{ borderTop: "1px solid var(--rule)", paddingTop: 32 }}>
                   <p className="eyebrow">Not used by any of these</p>

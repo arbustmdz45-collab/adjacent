@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { limited } from "@/lib/rate-limit";
+import { crossSite, limited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +18,7 @@ function bad(error: string, status = 400) {
 const clip = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
 export async function POST(req: Request) {
+  if (crossSite(req)) return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   if (limited("subscribe", req, 8)) return bad("Too many attempts. Wait a few minutes and try again.", 429);
 
   let body: Record<string, unknown>;
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
 
   const hook = process.env.LEADS_WEBHOOK_URL;
   if (!hook) {
-    console.warn("LEADS_WEBHOOK_URL is not set; lead not delivered:", { type, email });
+    console.warn(`LEADS_WEBHOOK_URL is not set; a ${type} sign-up was not delivered.`);
     return bad("Sign-ups aren't switched on yet. Please try again soon.", 503);
   }
 

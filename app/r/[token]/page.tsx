@@ -37,6 +37,14 @@ export default async function EmployerRole({ params }: { params: Promise<{ token
             </p>
           </section>
 
+          <div className="notice">
+            <p>
+              <strong>About these readings.</strong> They are written by AI from what each person and you described, and
+              checked by us before you see them. Quotes are the person’s own words. Use them to decide who to talk to, never
+              as the only reason to turn someone down.
+            </p>
+          </div>
+
           <section className="stack gap-24">
             <header className="stack gap-10">
               <h2 className="h2">People we’ve found</h2>

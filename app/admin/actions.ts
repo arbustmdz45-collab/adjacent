@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { ipFrom, limitedKey } from "@/lib/rate-limit";
 import { redirect } from "next/navigation";
 import { ask } from "@/lib/ai";
 import { clearAdminCookie, passwordMatches, requireAdmin, setAdminCookie } from "@/lib/auth";
@@ -16,6 +18,7 @@ import {
   listCandidates,
   matchedCandidateIds,
   provenMoves,
+  regenerateRoleToken,
   setStage,
   updateRoleBasics,
   upsertMatch,
@@ -24,7 +27,9 @@ import {
 const str = (f: FormData, k: string, max = 4000) => String(f.get(k) ?? "").trim().slice(0, max);
 
 export async function login(_prev: string | null, form: FormData) {
-  if (!process.env.ADMIN_PASSWORD) return "Set ADMIN_PASSWORD in your environment first.";
+  const pw = process.env.ADMIN_PASSWORD;
+  if (!pw || pw.length < 12) return "Set ADMIN_PASSWORD (at least 12 characters) in your environment first.";
+  if (limitedKey("login", ipFrom(await headers()), 5)) return "Too many attempts. Wait 10 minutes and try again.";
   if (!passwordMatches(str(form, "password", 200))) return "That password isn't right.";
   await setAdminCookie();
   redirect("/admin");
@@ -87,6 +92,12 @@ export async function findMatches(roleId: string, _prev: string | null) {
   }
   revalidatePath(`/admin/roles/${roleId}`);
   return `Checked ${ok} ${ok === 1 ? "person" : "people"} from the pool${ok < todo.length ? `; ${todo.length - ok} failed, run it again` : ""}.`;
+}
+
+export async function newEmployerLink(roleId: string) {
+  await requireAdmin();
+  await regenerateRoleToken(roleId);
+  revalidatePath(`/admin/roles/${roleId}`);
 }
 
 export async function moveStage(roleId: string, matchId: string, form: FormData) {

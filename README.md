@@ -31,6 +31,8 @@ The free tool is the way in. What adjacent owns is what happens after it:
 
 Nobody is rejected automatically, and a person makes every decision.
 
+Privacy and security are built in: consent with versioning, a private page for each person to see, download and delete their data, 12-month retention with automatic deletion, anonymous outcome counts, redaction of contact details, and hardened headers and sessions. [PRIVACY_AND_SECURITY.md](PRIVACY_AND_SECURITY.md) lists what's done and what you still need to do before launch.
+
 ## How it's built
 
 ```
@@ -84,7 +86,7 @@ npm run dev
 
 1. Import this repo at vercel.com/new.
 2. Add a Postgres database: in the Vercel project, Storage → Create → Neon (free tier). It sets `DATABASE_URL` for you.
-3. Add the environment variables from `.env.example`: `ANTHROPIC_API_KEY`, `ADMIN_PASSWORD`, `LEADS_WEBHOOK_URL` and `NEXT_PUBLIC_SITE_URL`.
+3. Add the environment variables from `.env.example`: `ANTHROPIC_API_KEY`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `CRON_SECRET`, `LEADS_WEBHOOK_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_CONTROLLER_NAME` and `NEXT_PUBLIC_CONTACT_EMAIL`. Pick an EU region for the database.
 4. Deploy. The tables are created on first use.
 
 The rate limit is per server instance and held in memory. It stops casual abuse but won't hold up under real traffic, so move it to a shared store such as Upstash Redis before you share the link widely.

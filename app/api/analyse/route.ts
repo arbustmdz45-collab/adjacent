@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { limited } from "@/lib/rate-limit";
+import { crossSite, limited } from "@/lib/rate-limit";
 import { CANDIDATE_TOOL, HIRING_SYSTEM, candidatePrompt } from "@/lib/hiring-prompt";
 import { ask } from "@/lib/ai";
 import { checkAgainst } from "@/lib/check";
+import { redact } from "@/lib/redact";
 import { describeMoves, provenMoves, type ProvenMove } from "@/lib/store";
 import { TOOLS, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
 import type { AnalyseRequest, CandidateResponse, Capability, Field } from "@/lib/types";
@@ -34,7 +35,7 @@ function validCapabilities(caps: unknown): caps is Capability[] {
 // Proven moves come from the database. Without one (local demo), the tool still works without them.
 async function loadMoves(): Promise<ProvenMove[]> {
   try {
-    return await provenMoves();
+    return await provenMoves(true);
   } catch (err) {
     console.warn("Proven moves unavailable:", (err as Error).message);
     return [];
@@ -58,6 +59,7 @@ function clean(field: Field, caps: Capability[], moves: ProvenMove[] = []): Fiel
 const MAX_CANDIDATE_CHARS = 12000;
 
 export async function POST(req: Request) {
+  if (crossSite(req)) return NextResponse.json({ error: "Not allowed." }, { status: 403 });
   if (!process.env.ANTHROPIC_API_KEY) return bad("Server is missing ANTHROPIC_API_KEY.", 500);
 
   if (limited("analyse", req, MAX_REQUESTS)) return bad("Too many requests. Wait a few minutes and try again.", 429);
@@ -69,6 +71,8 @@ export async function POST(req: Request) {
     return bad("Invalid JSON.");
   }
   if (!validRole(body?.role)) return bad("Describe what you do in at least a sentence (max 4,000 characters).");
+  // Minimise what leaves for the model: contact details typed into the description are removed first.
+  body.role = redact(body.role);
 
   try {
     if (body.step === "capabilities") {

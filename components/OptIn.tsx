@@ -21,11 +21,12 @@ export default function OptIn({ description, industry, capabilities, fields }: P
         <p className="eyebrow">You&apos;re in the pool</p>
         <h2 className="h3">We&apos;ll email you before anyone sees your contact details.</h2>
         <p className="prose">
-          Keep this link to see what we stored or delete it at any time:{" "}
+          Save this link to see, download or delete your data at any time:{" "}
           <a href={state.manage} className="selectable">
             {typeof window !== "undefined" ? window.location.origin : ""}
             {state.manage}
           </a>
+          . Anyone with this link can see your profile, so keep it private.
         </p>
       </section>
     );
@@ -106,8 +107,14 @@ export default function OptIn({ description, industry, capabilities, fields }: P
       <label className="check-row">
         <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} />
         <span>
-          Keep my description and the activities above, and show them to employers without my name or contact details. Email me
-          before passing on my details to anyone. I can delete everything at any time.
+          I’m 18 or over. Keep my description and the activities above for up to 12 months. adjacent may use AI to compare them with
+          employers’ roles, and show employers my background, activities and quotes from my own words, without my name or
+          contact details. Email me before passing my details to anyone. If I’m hired, an anonymous count (like “one hire from
+          hospitality into logistics”) may be kept even after I delete my profile. I can see, download or delete my data at any
+          time.{" "}
+          <a href="/privacy" target="_blank" rel="noopener">
+            Privacy policy
+          </a>
         </span>
       </label>
       {state.kind === "err" && <p className="form-status err">{state.message}</p>}

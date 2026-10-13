@@ -10,7 +10,7 @@ const EVIDENCE: Record<string, string> = { shown: "Shown.", partly: "Partly show
 const pad = (n: number) => String(n).padStart(2, "0");
 
 // One person's background against one role, capability by capability, in their own words.
-export default function Evidence({ match, role }: { match: Match; role: Role }) {
+export default function Evidence({ match, role, forOperator = false }: { match: Match; role: Role; forOperator?: boolean }) {
   const num = (id: string) => {
     const i = role.capabilities.findIndex((c) => c.id === id);
     return i >= 0 ? pad(i + 1) : "··";
@@ -24,7 +24,7 @@ export default function Evidence({ match, role }: { match: Match; role: Role }) 
       </div>
       <p className="small-label">
         Comes from {match.candidate.industry || "another field"}
-        {match.candidate.city ? ` · ${match.candidate.city}` : ""}
+        {forOperator && match.candidate.city ? ` · ${match.candidate.city}` : ""}
       </p>
       <p className="prose">{c.verdict_reason}</p>
       <div className="stack gap-12">

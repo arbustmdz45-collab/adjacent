@@ -5,7 +5,7 @@ import FindMatches from "@/components/admin/FindMatches";
 import CopyButton from "@/components/CopyButton";
 import Evidence from "@/components/Evidence";
 import RoleBreakdown from "@/components/RoleBreakdown";
-import { moveStage, updateRole } from "@/app/admin/actions";
+import { moveStage, newEmployerLink, updateRole } from "@/app/admin/actions";
 import { requireAdmin } from "@/lib/auth";
 import { STAGES, getRole, listCandidates, listMatches, stageLabel, type Match, type Role } from "@/lib/store";
 
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 function MatchCard({ match, role }: { match: Match; role: Role }) {
   return (
     <article className="field">
-      <Evidence match={match} role={role} />
+      <Evidence match={match} role={role} forOperator />
       <div className="operator-box">
         <p className="eyebrow">Only you see this</p>
         <p className="prose">
@@ -83,6 +83,11 @@ export default async function AdminRole({ params }: { params: Promise<{ id: stri
                 <Link href={`/r/${role.token}`} className="text-button">
                   Open it
                 </Link>
+                <form action={newEmployerLink.bind(null, role.id)}>
+                  <button type="submit" className="text-button">
+                    Replace link (old one stops working)
+                  </button>
+                </form>
               </div>
             </div>
             <form action={updateRole.bind(null, role.id)} className="stage-form">

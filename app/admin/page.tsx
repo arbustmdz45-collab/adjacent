@@ -2,12 +2,13 @@ import Link from "next/link";
 import AdminNav from "@/components/admin/AdminNav";
 import NewRoleForm from "@/components/admin/NewRoleForm";
 import { requireAdmin } from "@/lib/auth";
-import { listCandidates, listRoles } from "@/lib/store";
+import { listCandidates, listRoles, purgeExpired } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
   await requireAdmin();
+  await purgeExpired(); // retention runs here too, in case the daily job isn't set up
   const [roles, pool] = await Promise.all([listRoles(), listCandidates(true)]);
   return (
     <>

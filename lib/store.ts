@@ -1,6 +1,7 @@
 // Everything adjacent remembers: the candidate pool, employers' roles, and what happened between them.
 import "server-only";
-import { newId, newToken, q } from "./db";
+import { hashToken, newId, newToken, q } from "./db";
+import { redact } from "./redact";
 import type { CandidateCheck, Capability } from "./types";
 import type { RoleBreakdown } from "./hiring-prompt";
 
@@ -20,6 +21,14 @@ export const isStage = (k: string): k is Stage => STAGES.some((s) => s.key === k
 
 const json = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v);
 
+// ---------- Retention ----------
+// Pool profiles are kept for 12 months from consent, then deleted automatically.
+export const POOL_RETENTION_MONTHS = 12;
+// Closed roles (with the employer's contact and description) are deleted 12 months after closing.
+export const ROLE_RETENTION_MONTHS = 12;
+// Change this whenever the consent wording in components/OptIn.tsx changes.
+export const CONSENT_VERSION = "pool-2026-10-v1";
+
 // ---------- Candidates ----------
 
 export type Candidate = {
@@ -32,7 +41,9 @@ export type Candidate = {
   capabilities: Capability[];
   interests: string[];
   status: string;
-  manage_token: string;
+  consent_version: string;
+  consent_at: string;
+  expires_at: string;
   created_at: string;
 };
 
@@ -41,17 +52,26 @@ function toCandidate(r: Record<string, unknown>): Candidate {
     ...(r as unknown as Candidate),
     capabilities: json(r.capabilities) as Capability[],
     interests: json(r.interests) as string[],
+    consent_at: String(r.consent_at),
+    expires_at: String(r.expires_at),
     created_at: String(r.created_at),
   };
 }
 
-export async function createCandidate(c: Omit<Candidate, "id" | "status" | "manage_token" | "created_at">) {
+export async function createCandidate(
+  c: Pick<Candidate, "name" | "email" | "city" | "description" | "industry" | "capabilities" | "interests">,
+) {
   const id = newId("cand");
   const token = newToken();
+  // Minimise before storing: contact details typed into free text are removed.
+  const capabilities = c.capabilities.map((x) => ({ ...x, activity: redact(x.activity), detail: redact(x.detail) }));
   await q(
-    `insert into candidates (id, name, email, city, description, industry, capabilities, interests, manage_token)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    [id, c.name, c.email, c.city, c.description, c.industry, JSON.stringify(c.capabilities), JSON.stringify(c.interests), token],
+    `insert into candidates (id, name, email, city, description, industry, capabilities, interests, manage_hash, consent_version, expires_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now() + interval '${POOL_RETENTION_MONTHS} months')`,
+    [
+      id, c.name, c.email, c.city, redact(c.description), c.industry, JSON.stringify(capabilities),
+      JSON.stringify(c.interests), hashToken(token), CONSENT_VERSION,
+    ],
   );
   return { id, token };
 }
@@ -62,12 +82,36 @@ export async function listCandidates(onlyActive = true) {
 }
 
 export async function getCandidateByToken(token: string) {
-  const rows = await q(`select * from candidates where manage_token = $1`, [token]);
+  const rows = await q(`select * from candidates where manage_hash = $1`, [hashToken(token)]);
   return rows[0] ? toCandidate(rows[0]) : null;
 }
 
+// Erasure: the profile and every match that names this person go. Anonymous outcome counts stay (see outcomes).
 export async function deleteCandidateByToken(token: string) {
-  await q(`delete from candidates where manage_token = $1`, [token]);
+  await q(`delete from candidates where manage_hash = $1`, [hashToken(token)]);
+}
+
+// Access and portability: everything we hold about this person, in a machine-readable form.
+export async function exportCandidate(token: string) {
+  const c = await getCandidateByToken(token);
+  if (!c) return null;
+  const matches = await q(
+    `select r.title as role_title, m.stage, m.employer_interest, m.check_json, m.updated_at
+     from matches m join roles r on r.id = m.role_id where m.candidate_id = $1 and m.stage <> 'suggested'`,
+    [c.id],
+  );
+  return {
+    exported_at: new Date().toISOString(),
+    profile: {
+      name: c.name, email: c.email, city: c.city, description: c.description, industry: c.industry,
+      capabilities: c.capabilities, interests: c.interests,
+      consent_version: c.consent_version, consent_at: c.consent_at, delete_after: c.expires_at, joined: c.created_at,
+    },
+    shared_with_employers: matches.map((m) => ({
+      role: m.role_title, stage: m.stage, employer_asked_to_meet: m.employer_interest,
+      reading_shown: json(m.check_json), updated_at: String(m.updated_at),
+    })),
+  };
 }
 
 // Text the candidate check reads: their own words, plus the activities they confirmed.
@@ -132,7 +176,26 @@ export async function getRoleByToken(token: string) {
 }
 
 export async function updateRoleBasics(id: string, fieldLabel: string, status: string) {
-  await q(`update roles set field_label = $2, status = $3 where id = $1`, [id, fieldLabel, status]);
+  await q(
+    `update roles set field_label = $2, status = $3,
+       closed_at = case when $3 = 'closed' then coalesce(closed_at, now()) else null end
+     where id = $1`,
+    [id, fieldLabel, status],
+  );
+}
+
+// If an employer link leaks, issue a new one; the old link stops working immediately.
+export async function regenerateRoleToken(id: string) {
+  await q(`update roles set token = $2 where id = $1`, [id, newToken()]);
+}
+
+// Retention: delete expired pool profiles and long-closed roles. Safe to run any time.
+export async function purgeExpired() {
+  const people = await q(`delete from candidates where expires_at < now() returning id`);
+  const roles = await q(
+    `delete from roles where status = 'closed' and closed_at < now() - interval '${ROLE_RETENTION_MONTHS} months' returning id`,
+  );
+  return { candidates: people.length, roles: roles.length };
 }
 
 // ---------- Matches ----------
@@ -184,12 +247,36 @@ export async function matchedCandidateIds(roleId: string) {
   return new Set(rows.map((r) => r.candidate_id));
 }
 
+const OUTCOME_STAGES = ["hired", "retained_90", "left"];
+
 export async function setStage(matchId: string, stage: Stage, note: string) {
+  const rows = await q<{ outcome_id: string | null; from_industry: string; to_field: string }>(
+    `select m.outcome_id, c.industry as from_industry, r.field_label as to_field
+     from matches m join candidates c on c.id = m.candidate_id join roles r on r.id = m.role_id where m.id = $1`,
+    [matchId],
+  );
+  const m = rows[0];
+  if (!m) return;
+  let outcomeId = m.outcome_id;
+  if (OUTCOME_STAGES.includes(stage)) {
+    // Anonymous on purpose: no candidate id, no role id, no dates finer than a month.
+    if (outcomeId) {
+      await q(`update outcomes set result = $2 where id = $1`, [outcomeId, stage]);
+    } else {
+      outcomeId = newId("out");
+      await q(`insert into outcomes (id, from_industry, to_field, result, month) values ($1,$2,$3,$4,$5)`, [
+        outcomeId, m.from_industry || "Unknown", m.to_field || "Unknown", stage, new Date().toISOString().slice(0, 7),
+      ]);
+    }
+  } else if (outcomeId) {
+    await q(`delete from outcomes where id = $1`, [outcomeId]);
+    outcomeId = null;
+  }
   await q(
-    `update matches set stage = $2, note = $3, updated_at = now(),
+    `update matches set stage = $2, note = $3, outcome_id = $4, updated_at = now(),
        hired_at = case when $2 in ('hired','retained_90','left') then coalesce(hired_at, now()) else null end
      where id = $1`,
-    [matchId, stage, note],
+    [matchId, stage, redact(note), outcomeId],
   );
 }
 
@@ -207,17 +294,24 @@ export async function markEmployerInterest(roleToken: string, matchId: string) {
 
 export type ProvenMove = { key: string; from: string; to: string; hired: number; retained: number; left: number };
 
-export async function provenMoves(): Promise<ProvenMove[]> {
+// Public numbers are only shown once a move has at least this many hires, so no one can be singled out.
+export const MIN_PUBLIC_HIRES = Math.max(1, Number(process.env.MIN_PUBLIC_HIRES || 3));
+
+// Read from the anonymous outcomes table, so counts survive when people delete their profiles.
+// `forPublic` hides moves with too few hires to be anonymous.
+export async function provenMoves(forPublic = false): Promise<ProvenMove[]> {
   const rows = await q(
-    `select c.industry as from_industry, r.field_label as to_field,
-       count(*) filter (where m.stage in ('hired','retained_90','left'))::int as hired,
-       count(*) filter (where m.stage = 'retained_90')::int as retained,
-       count(*) filter (where m.stage = 'left')::int as left_count
-     from matches m join candidates c on c.id = m.candidate_id join roles r on r.id = m.role_id
-     where m.stage in ('hired','retained_90','left') and c.industry <> '' and r.field_label <> ''
-     group by c.industry, r.field_label
+    `select from_industry, to_field,
+       count(*)::int as hired,
+       count(*) filter (where result = 'retained_90')::int as retained,
+       count(*) filter (where result = 'left')::int as left_count
+     from outcomes
+     where from_industry <> 'Unknown' and to_field <> 'Unknown'
+     group by from_industry, to_field
+     having count(*) >= $1
      order by hired desc, retained desc
      limit 40`,
+    [forPublic ? MIN_PUBLIC_HIRES : 1],
   );
   return rows.map((r, i) => ({
     key: `m${i + 1}`,
