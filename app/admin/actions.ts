@@ -32,7 +32,7 @@ export async function login(_prev: string | null, form: FormData) {
   if (limitedKey("login", ipFrom(await headers()), 5)) return "Too many attempts. Wait 10 minutes and try again.";
   if (!passwordMatches(str(form, "password", 200))) return "That password isn't right.";
   await setAdminCookie();
-  redirect("/admin");
+  redirect("/workspace");
 }
 
 export async function logout() {

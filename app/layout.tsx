@@ -11,12 +11,12 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "adjacent — your work, read as what it is",
+  title: "adjacent — hire the person who already does this job, in another field",
   description:
-    "Describe what you do all day. See the activities your work shows you can do, and three fields outside your industry that need them.",
+    "Paste an opening that is not getting filled. adjacent takes it apart into real activities, shows which other fields already have people doing them, and gives you a way to check before you hire.",
   openGraph: {
-    title: "adjacent — your work, read as what it is",
-    description: "Describe a normal day at work. Find three fields outside your industry that need what you already do.",
+    title: "adjacent — hire the person who already does this job, in another field",
+    description: "For employers with office openings that stay open: the job as activities, the fields to look in, and evidence instead of a CV.",
     type: "website",
     siteName: "adjacent",
   },

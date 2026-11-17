@@ -200,6 +200,14 @@
 .adjw .mrow>div:first-child {grid-column:1/-1}
 }
 .adjw { min-height: 100vh; font-family: var(--body); color-scheme: light; }
+/* Follows the visitor's system setting, like the demo did. */
+@media (prefers-color-scheme: dark) {
+  .adjw {
+    --paper:#1A1917; --surface:#232220; --ink:#ECE8DF; --muted:#A49E93; --line:#3A3733;
+    --accent:#A9BDB0; --mark:#D9C58A; --mark-ink:#24221F;
+    --strong:#8FBF9F; --partial:#D9A95A; --none:#8F897F; color-scheme: dark;
+  }
+}
 .adjw a.wbtn { text-decoration: none; display: inline-block; }
 .adjw .note a, .adjw .bot a { color: var(--muted); }
 .adjw button, .adjw input, .adjw textarea { font-family: var(--body); }

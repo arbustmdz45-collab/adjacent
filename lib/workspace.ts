@@ -83,6 +83,7 @@ export function forEmployer(c: WsCandidate): WsCandidate {
 }
 
 export async function getOpening(id: string) {
+  await seedOnce();
   const rows = await q(`select data from ws_openings where id = $1`, [id]);
   return rows[0] ? (json(rows[0].data) as Opening) : null;
 }

@@ -10,7 +10,7 @@ export default function SiteHeader({ current = "home" }: Props) {
       </a>
       <nav aria-label="Main" className="site-nav wrap">
         <div className="site-nav-left">
-          <Link href="/" className="logo" aria-label="adjacent, home">
+          <Link href="/seekers" className="logo" aria-label="adjacent, home">
             <span className="logo-word">adjacent</span>
             <span className="logo-tag">CAREER PIVOTS</span>
           </Link>
@@ -18,8 +18,8 @@ export default function SiteHeader({ current = "home" }: Props) {
             <Link href="/try" aria-current={current === "tool" ? "page" : undefined}>
               THE TOOL
             </Link>
-            <Link href="/#fit">HOW WE JUDGE A FIT</Link>
-            <Link href="/#employers">FOR EMPLOYERS</Link>
+            <Link href="/seekers#fit">HOW WE JUDGE A FIT</Link>
+            <Link href="/seekers#employers">FOR EMPLOYERS</Link>
           </div>
         </div>
         {current !== "tool" && (
