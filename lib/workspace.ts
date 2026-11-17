@@ -2,7 +2,7 @@
 // and the pipeline that records what happened (test, hire, 90 days). Documents are stored as JSON.
 import "server-only";
 import { ask, type ToolDef } from "./ai";
-import { q } from "./db";
+import { newToken, q } from "./db";
 import { redact } from "./redact";
 import seed from "./workspace-seed.json";
 
@@ -27,7 +27,8 @@ export type Opening = {
   example?: boolean;
   created: number;
 };
-export type Evidence = { aid: string; level: number; quote: string; note: string };
+export type Evidence = { aid: string; level: number; quote: string; note: string; src?: "said" | "cv" };
+export type InterviewReview = { aid: string; level: number; quote: string; note: string };
 export type WsCandidate = {
   id: string;
   oid: string;
@@ -45,6 +46,10 @@ export type WsCandidate = {
   iv?: Record<string, number>;
   d90?: "stayed" | "left";
   email?: string;
+  cv?: string; // text read from an uploaded PDF; never shown to the employer, only quoted lines are
+  hasCv?: boolean;
+  itoken?: string; // the candidate's private interview link
+  interview?: { answers: Record<string, string>; review: InterviewReview[]; at: number };
   example?: boolean;
   created: number;
 };
@@ -76,10 +81,12 @@ export async function listAll() {
 }
 
 // A candidate's email reaches the employer only once the employer has asked to meet them.
+// The CV text itself is never sent to the employer. The interview link appears with the email.
 export function forEmployer(c: WsCandidate): WsCandidate {
-  if (["meet", "passed", "hired"].includes(c.status)) return c;
-  const { email: _hidden, ...rest } = c;
-  return rest;
+  const { cv: _cv, email, itoken, ...rest } = c;
+  const out: WsCandidate = { ...rest, hasCv: Boolean(c.cv) };
+  if (["meet", "passed", "hired"].includes(c.status)) Object.assign(out, { email, itoken });
+  return out;
 }
 
 export async function getOpening(id: string) {
@@ -114,6 +121,7 @@ export async function patchCandidate(id: string, patch: Record<string, unknown>)
   const c = json(rows[0].data) as WsCandidate;
   const statuses = ["new", "meet", "passed", "failed", "hired", "declined"];
   if (typeof patch.status === "string" && statuses.includes(patch.status)) c.status = patch.status as WsCandidate["status"];
+  if (c.status === "meet" && !c.itoken) c.itoken = newToken(); // the written interview opens once the employer asks to meet
   if (patch.test === null) delete c.test;
   else if (patch.test && typeof patch.test === "object") {
     const t = patch.test as { checks?: unknown; result?: unknown };
@@ -229,13 +237,13 @@ const CAND_TOOL: ToolDef = {
     properties: {
       from: { type: "string" },
       field: { type: "integer" },
-      evidence: { type: "array", items: { type: "object", required: ["aid", "level", "quote", "note"], properties: { aid: { type: "string" }, level: { type: "integer", enum: [0, 1, 2] }, quote: { type: "string" }, note: { type: "string" } } } },
+      evidence: { type: "array", items: { type: "object", required: ["aid", "level", "quote", "source", "note"], properties: { aid: { type: "string" }, level: { type: "integer", enum: [0, 1, 2] }, quote: { type: "string" }, source: { type: "string", enum: ["description", "cv"] }, note: { type: "string" } } } },
       gap: { type: "string" },
     },
   },
 };
 
-function candPrompt(o: Opening, text: string) {
+function candPrompt(o: Opening, text: string, cv: string) {
   return `A person coming from another field described their job. Compare what they WROTE against the activities of an opening.
 
 <opening>${o.title}</opening>
@@ -246,10 +254,12 @@ ${o.activities.map((a) => `${a.id}: ${a.name}. ${a.detail}`).join("\n")}
 ${o.fields.map((f, i) => `${i}: ${f.name}`).join("\n")}
 </fields>
 <person>${text}</person>
-
-The rule that is never broken: only what the person wrote counts. Never invent experience, figures or results.
+${cv ? `<cv>${cv}</cv>\n` : ""}
+The rule that is never broken: only what the person wrote counts. Never invent experience, figures or results.${cv ? `
+The person also uploaded a CV. Prefer their own description. Use the CV only for lines that state something they did; a job title, an employer's name, a degree or a list of skills is not evidence of an activity. Ignore name, age, photo, address, nationality, marital status and schools.` : ""}
 - For each activity give level: 2 if what they wrote shows they already do that same thing, 1 if it shows part of it, 0 if nothing they wrote supports it.
-- quote: a literal, word-for-word copy of the fragment of <person> that supports it (30 words at most, in the person's own language). If level is 0, quote is empty.
+- quote: a literal, word-for-word copy of the fragment of <person>${cv ? " or <cv>" : ""} that supports it (30 words at most, in the person's own language). If level is 0, quote is empty.
+- source: "description" if the quote comes from <person>, "cv" if it comes from <cv>.
 - note: one short sentence in English explaining the level or what is missing.
 - from: the field or job they come from and for how long, in a few words, only what they say.
 - field: the number of the entry in <fields> their job belongs to, or -1 if none.
@@ -258,23 +268,29 @@ The rule that is never broken: only what the person wrote counts. Never invent e
 
 const norm = (s: string) => s.toLowerCase().replace(/[“”"«»'’]/g, "").replace(/\s+/g, " ").trim();
 
-export async function createAnswer(o: Opening, input: { text: string; zone: string; pay: string; avail: string; email: string }) {
+export async function createAnswer(o: Opening, input: { text: string; zone: string; pay: string; avail: string; email: string; cv?: string }) {
   const said = redact(input.text);
-  const r = await ask<{ from?: string; field?: number; evidence?: Evidence[]; gap?: string }>(CAND_TOOL, candPrompt(o, said), SYSTEM);
+  const cv = input.cv ? redact(input.cv).slice(0, 12000) : "";
+  const r = await ask<{ from?: string; field?: number; evidence?: (Evidence & { source?: string })[]; gap?: string }>(CAND_TOOL, candPrompt(o, said, cv), SYSTEM);
   const hay = norm(said);
+  const hayCv = norm(cv);
   // The quote check runs in code, not in the model: a match with no literal quote behind it is discarded.
   const evidence = o.activities.map((a) => {
     const e = (r.evidence || []).find((x) => x.aid === a.id);
     let level = lvl(e?.level);
     let quote = str(e?.quote, 400);
     let note = str(e?.note, 300);
-    if (level > 0 && (!quote || !hay.includes(norm(quote)))) {
+    const inSaid = Boolean(quote) && hay.includes(norm(quote));
+    const inCv = Boolean(quote) && Boolean(cv) && hayCv.includes(norm(quote));
+    if (level > 0 && !inSaid && !inCv) {
       level = 0;
       quote = "";
       note = "adjacent discarded this match because the quote does not appear in what the person wrote.";
     }
     if (level === 0) quote = "";
-    return { aid: a.id, level, quote, note };
+    const ev: Evidence = { aid: a.id, level, quote, note };
+    if (level > 0) ev.src = inSaid ? "said" : "cv";
+    return ev;
   });
   const fi = Number.isInteger(r.field) && Number(r.field) >= 0 && Number(r.field) < o.fields.length ? Number(r.field) : -1;
   const c: WsCandidate = {
@@ -291,6 +307,7 @@ export async function createAnswer(o: Opening, input: { text: string; zone: stri
     gap: str(r.gap, 300),
     status: "new",
     email: input.email,
+    ...(cv ? { cv } : {}),
     created: Date.now(),
   };
   await q(`insert into ws_candidates (id, opening_id, data) values ($1, $2, $3)`, [c.id, o.id, JSON.stringify(c)]);
@@ -300,4 +317,75 @@ export async function createAnswer(o: Opening, input: { text: string; zone: stri
 // What the public candidate page is allowed to see of an opening.
 export function publicOpening(o: Opening) {
   return { id: o.id, company: o.company, title: o.title, pay: o.pay, hours: o.hours, zone: o.zone, activities: o.activities, ad: { headline: o.ad.headline }, open: o.open };
+}
+
+// ---------- the written interview ----------
+
+const INTERVIEW_TOOL: ToolDef = {
+  name: "return_interview_review",
+  description: "Return, per interview question, what the candidate's written answer shows.",
+  input_schema: {
+    type: "object",
+    required: ["review"],
+    properties: {
+      review: { type: "array", items: { type: "object", required: ["aid", "level", "quote", "note"], properties: { aid: { type: "string" }, level: { type: "integer", enum: [0, 1, 2] }, quote: { type: "string" }, note: { type: "string" } } } },
+    },
+  },
+};
+
+export async function getByInterviewToken(token: string) {
+  if (!token || token.length < 16) return null;
+  const rows = await q(`select data from ws_candidates where data->>'itoken' = $1`, [token]);
+  if (!rows[0]) return null;
+  const c = json(rows[0].data) as WsCandidate;
+  const o = await getOpening(c.oid);
+  return o ? { c, o } : null;
+}
+
+// What the candidate's interview page may see: the questions, never what the employer listens for.
+export function publicInterview(o: Opening, c: WsCandidate) {
+  return {
+    code: c.code,
+    company: o.company,
+    title: o.title,
+    open: o.open !== false && ["meet", "passed"].includes(c.status),
+    done: Boolean(c.interview),
+    questions: o.questions.map((x) => ({ aid: x.aid, q: x.q, activity: o.activities.find((a) => a.id === x.aid)?.name || "" })),
+  };
+}
+
+export async function submitInterview(o: Opening, c: WsCandidate, raw: Record<string, unknown>) {
+  const answers: Record<string, string> = {};
+  for (const x of o.questions) answers[x.aid] = redact(str(raw[x.aid], 2500));
+  const prompt = `A candidate from another field answered the interview questions for an opening in writing. For each question, judge the answer against what a good answer contains.
+
+<opening>${o.title}</opening>
+${o.questions.map((x) => `<question id="${x.aid}">
+Activity: ${o.activities.find((a) => a.id === x.aid)?.name || ""}
+Asked: ${x.q}
+A good answer: ${x.listen}
+<answer>${answers[x.aid] || "(no answer)"}</answer>
+</question>`).join("\n")}
+
+Only what the candidate wrote counts. Never invent or assume experience.
+- level: 2 if the answer describes a specific past situation and contains most of what a good answer contains, 1 if it is specific but partial or general but relevant, 0 if it is empty, vague or off the question.
+- quote: a literal, word-for-word copy of the strongest fragment of that answer (30 words at most). Empty if level is 0.
+- note: one short sentence in English saying what the answer shows and what is missing.
+The employer reads every answer and makes the decision. You only point at the evidence.`;
+  const r = await ask<{ review?: InterviewReview[] }>(INTERVIEW_TOOL, prompt, SYSTEM);
+  const review = o.questions.map((x) => {
+    const e = (r.review || []).find((y) => y.aid === x.aid);
+    let level = lvl(e?.level);
+    let quote = str(e?.quote, 400);
+    let note = str(e?.note, 300);
+    if (level > 0 && (!quote || !norm(answers[x.aid]).includes(norm(quote)))) {
+      level = 0;
+      quote = "";
+      note = "adjacent could not tie its reading to a literal quote from this answer. Read it yourself.";
+    }
+    if (level === 0) quote = "";
+    return { aid: x.aid, level, quote, note };
+  });
+  c.interview = { answers, review, at: Date.now() };
+  await q(`update ws_candidates set data = $2 where id = $1`, [c.id, JSON.stringify(c)]);
 }

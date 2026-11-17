@@ -48,7 +48,10 @@ export default function Privacy() {
             (Art. 6(1)(a)) we keep what you wrote about your work, the area, pay and start date you gave, and your email. AI
             compares your text with the activities of that opening, and only literal quotes from your own words count as
             evidence. The employer sees your text and that comparison, never a name, and sees your email only if they ask to
-            meet you. Emails, phone numbers and links inside your description are removed automatically.
+            meet you. Emails, phone numbers and links inside your description are removed automatically. If you upload a CV,
+            it is read once for its text and the file is not kept; the employer never sees the CV, only quoted lines about
+            work you did. If the employer asks to meet you, they may send you a link to answer interview questions in
+            writing; AI points the employer at parts of your answers, and a person at the company reads them and decides.
           </li>
           <li>
             <strong>Newsletter and pilot requests.</strong> Your email, and for pilots your company and what you tell us about

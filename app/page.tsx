@@ -10,8 +10,8 @@ import "@/components/workspace/workspace.css";
 const STEPS = [
   ["Paste the opening", "The ad as you posted it, with pay, hours and location. adjacent takes it apart into what the person does every day and shows which of your requirements shut out people who can do the work."],
   ["See where to look", "Three fields outside your industry where people already do those activities, with what you would have to teach them and where to find them."],
-  ["Replace the CV", "Your ad sends people to a candidate page. They describe a job in their own words and adjacent lines it up with each activity. Only their literal words count as evidence."],
-  ["Check, hire, record", "A 20-minute practical test and an interview guide come with every opening. Each test, hire and 90-day result is recorded against the field the person came from."],
+  ["Evidence, not job titles", "Your ad sends people to a candidate page. They describe a job in their own words, with a CV if they want, and adjacent lines it up with each activity. Only their literal words count as evidence."],
+  ["Interview, test, hire, record", "The people you want to meet answer the interview in writing through a private link. A 20-minute practical test comes with every opening. Each test, hire and 90-day result is recorded against the field the person came from."],
 ];
 
 // The public home page: for employers. The earlier job-seeker page now lives at /seekers.

@@ -6,6 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+const MAX_PDF_BYTES = 4 * 1024 * 1024; // the file is read once for its text and never stored
 const clip = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
 
@@ -20,9 +21,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (crossSite(req)) return bad("Not allowed.", 403);
   if (limited("ws-answer", req, Number(process.env.ANSWERS_PER_10_MIN || 5))) return bad("Too many answers from this connection. Wait a few minutes and try again.", 429);
+  // The form is sent as multipart so an optional CV (PDF) can come with it.
   let body: Record<string, unknown>;
+  let file: File | null = null;
   try {
-    body = await req.json();
+    const form = await req.formData();
+    body = Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string"));
+    const f = form.get("cv");
+    if (f && typeof f !== "string" && f.size > 0) file = f;
   } catch {
     return bad("Invalid request.");
   }
@@ -31,13 +37,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (text.split(/\s+/).length < 15) return bad("Write at least a couple of sentences about what you did on a normal day.");
   const email = clip(body.email, 200).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return bad("Add an email address so the employer can reach you if they want to meet.");
-  if (body.consent !== true) return bad("Tick the box so the employer is allowed to read your answer.");
+  if (body.consent !== "true") return bad("Tick the box so the employer is allowed to read your answer.");
+  let cv = "";
+  if (file) {
+    if (file.size > MAX_PDF_BYTES) return bad("That PDF is larger than 4 MB. Upload a smaller one or leave it out.");
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return bad("The CV has to be a PDF.");
+    try {
+      const { extractText, getDocumentProxy } = await import("unpdf");
+      const { text: pages } = await extractText(await getDocumentProxy(new Uint8Array(await file.arrayBuffer())), { mergePages: true });
+      cv = String(pages || "").trim();
+    } catch {
+      return bad("That PDF could not be read. Upload a different file or leave it out.");
+    }
+    if (cv.length < 80) return bad("No text could be read from that PDF. It may be a scanned image. Upload a text PDF or leave it out.");
+  }
   if (!process.env.ANTHROPIC_API_KEY) return bad("The comparison is not available right now.", 503);
   try {
     const o = await getOpening((await params).id.slice(0, 40));
     if (!o) return bad("This opening does not exist.", 404);
     if (o.open === false) return bad("This opening has been filled.", 409);
-    const candidate = await createAnswer(o, { text, zone: clip(body.zone, 80), pay: clip(body.pay, 80), avail: clip(body.avail, 80), email });
+    const candidate = await createAnswer(o, { text, zone: clip(body.zone, 80), pay: clip(body.pay, 80), avail: clip(body.avail, 80), email, cv });
     return NextResponse.json({ candidate });
   } catch (err) {
     console.error(err);

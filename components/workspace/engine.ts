@@ -10,7 +10,7 @@ const D = { openings:{}, cands:{} };
 let dirty = false, loaded = false, pending = 0;
 const clone = o => JSON.parse(JSON.stringify(o));
 async function api(url, body){
-  const res = await fetch(url, body ? { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) } : { cache:"no-store" });
+  const res = await fetch(url, !body ? { cache:"no-store" } : body instanceof FormData ? { method:"POST", body } : { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && opts.mode === "workspace") location.href = "/admin/login";
   if (!res.ok) throw new Error(data.error || "Something went wrong.");
@@ -20,6 +20,7 @@ async function refresh(){
   if (pending || ac.signal.aborted) return;
   try {
     if (opts.mode === "apply") { const d = await api("/api/apply/" + opts.openingId); D.openings[d.opening.id] = d.opening; }
+    else if (opts.mode === "interview") { S.interview = (await api("/api/interview/" + opts.token)).interview; }
     else { const d = await api("/api/workspace"); if (pending) return; D.openings = Object.fromEntries(d.openings.map(o => [o.id, o])); D.cands = Object.fromEntries(d.cands.map(c => [c.id, c])); S.storeNote = ""; }
   } catch(e){ if (opts.mode === "workspace") S.storeNote = e.message; }
   loaded = true; softRender();
@@ -36,7 +37,7 @@ function save(col, obj){
 function softRender(){ const a = document.activeElement; if (a && root.contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== "checkbox") { dirty = true; return; } render(); }
 
 /* ---------- helpers ---------- */
-const S = { route:"openings", tab:{}, fld:0, kit:"ad", busy:"", err:"", storeNote:"", form:{company:"",raw:"",pay:"",hours:"",zone:""}, cform:{text:"",zone:"",pay:"",avail:"",email:"",consent:false,website:""}, candBusy:false, candErr:"", applied:null, copied:"" };
+const S = { route:"openings", tab:{}, fld:0, kit:"ad", busy:"", err:"", storeNote:"", form:{company:"",raw:"",pay:"",hours:"",zone:""}, cform:{text:"",zone:"",pay:"",avail:"",email:"",consent:false,website:""}, candBusy:false, candErr:"", applied:null, copied:"", cvFile:null, interview:null, iform:{}, ivBusy:false, ivErr:"" };
 const $ = s => root.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm = s => String(s||"").toLowerCase().replace(/[“”"«»'’]/g,"").replace(/\s+/g," ").trim();
@@ -68,9 +69,18 @@ async function submitAnswer(o){
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) { S.candErr = "Add an email address so the employer can reach you if they want to meet."; return render(); }
   if (!f.consent) { S.candErr = "Tick the box so the employer is allowed to read your answer."; return render(); }
   S.candBusy = true; render();
-  try { const { candidate } = await api("/api/apply/" + o.id, f); D.cands[candidate.id] = candidate;
+  if (S.cvFile && S.cvFile.size > 4 * 1024 * 1024) { S.candErr = "That PDF is larger than 4 MB. Upload a smaller one or remove it."; S.candBusy = false; return render(); }
+  const fd = new FormData(); ["text","zone","pay","avail","email","website"].forEach(k => fd.append(k, f[k] || "")); fd.append("consent", "true"); if (S.cvFile) fd.append("cv", S.cvFile);
+  try { const { candidate } = await api("/api/apply/" + o.id, fd); D.cands[candidate.id] = candidate; S.cvFile = null;
     S.candBusy = false; S.cform = {text:"",zone:"",pay:"",avail:"",email:"",consent:false,website:""}; S.applied = candidate.id; render(); window.scrollTo({top:0}); }
   catch(e){ S.candBusy = false; S.candErr = e.message; render(); }
+}
+async function submitInterview(){
+  S.ivErr = ""; const qs = S.interview.questions;
+  if (qs.some(x => (S.iform[x.aid] || "").trim().split(/\s+/).length < 10)) { S.ivErr = "Answer every question with at least a couple of sentences."; return render(); }
+  S.ivBusy = true; render();
+  try { await api("/api/interview/" + opts.token, { answers:S.iform }); S.ivBusy = false; S.interview.done = true; render(); window.scrollTo({top:0}); }
+  catch(e){ S.ivBusy = false; S.ivErr = e.message; render(); }
 }
 function setCand(id, fn){ const c = clone(D.cands[id]); fn(c); save("cands", c); }
 
@@ -162,8 +172,8 @@ function vOpening(o){ const n = counts(o.id); const t = S.tab[o.id] || (n.all ? 
 function evidenceCard(c, o){
   return `<article class="cand"><div class="ch"><div><strong>${esc(c.code)}</strong> <span class="note">comes from ${esc(c.from)}</span></div>
     <div class="wfacts"><span>${esc(c.zone)}</span><span>expects ${esc(c.salary)}</span>${c.avail?`<span>${esc(c.avail)}</span>`:""}</div></div>
-    ${o.activities.map((a,k)=>{const e=c.evidence.find(x=>x.aid===a.id)||{level:0,quote:"",note:""};return `<div class="ev"><div><span class="pill s${e.level}">${LV[e.level]}</span></div><div><div class="an">${num(k)} ${esc(a.name)}</div>${e.quote?`<blockquote><mark>${esc(e.quote)}</mark></blockquote>`:""}<div class="nt">${esc(e.note)}</div></div></div>`}).join("")}
-    <div class="cf"><strong>Would have to learn:</strong> ${esc(c.gap)}</div>
+    ${o.activities.map((a,k)=>{const e=c.evidence.find(x=>x.aid===a.id)||{level:0,quote:"",note:""};return `<div class="ev"><div><span class="pill s${e.level}">${LV[e.level]}</span></div><div><div class="an">${num(k)} ${esc(a.name)}</div>${e.quote?`<blockquote><mark>${esc(e.quote)}</mark></blockquote>`:""}<div class="nt">${e.src==="cv"?`<span class="wtag">from their CV</span> `:""}${esc(e.note)}</div></div></div>`}).join("")}
+    <div class="cf"><strong>Would have to learn:</strong> ${esc(c.gap)}${c.hasCv?`<br>They also uploaded a CV. adjacent read it for lines about what they did; the CV itself is not shown, so name, age and school stay out of the decision.`:""}</div>
     <details><summary>Everything they wrote</summary><p>${esc(c.said)}</p></details></article>`; }
 
 function contact(c){ return c.email ? `<p class="note">Contact: <a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>` : `<p class="note">No contact on file${c.example?" (example person)":""}.</p>`; }
@@ -180,7 +190,12 @@ function vCand(c, o){ const st = c.status, test = c.test || {checks:[]}, crit = 
   if (st==="passed") act = `<section><div class="mini">After the interview</div>${contact(c)}<div class="wrow"><button class="wbtn" data-st="${c.id}:hired">Record as hired</button><button class="wbtn ghost" data-st="${c.id}:declined">Not moving forward</button></div></section>`;
   if (st==="hired") act = `<section><div class="mini">90-day check</div>${c.d90?`<p class="note">Recorded. This result now counts in the track record for ${esc(c.fi>=0?o.fields[c.fi].name:"this field")}.</p>`:`<p class="note">Record this 90 days after the start date.</p><div class="wrow"><button class="wbtn" data-d90="${c.id}:stayed">Still in the job</button><button class="wbtn ghost" data-d90="${c.id}:left">Left</button></div>`}</section>`;
   if (st==="failed"||st==="declined") act = `<section><div class="mini">Closed</div><div class="wrow"><button class="wbtn ghost sm" data-st="${c.id}:new">Move back to answered</button></div></section>`;
-  const iv = (st==="meet"||st==="passed"||st==="hired") ? `<section><div class="mini">Interview</div>${o.questions.map(q=>{const k=o.activities.findIndex(a=>a.id===q.aid);const v=(c.iv||{})[q.aid];return `<div class="iq"><span><strong>${num(k)}</strong> ${esc(q.q)}</span><span class="rate">${[[2,"strong"],[1,"partial"],[0,"weak"]].map(r=>`<button data-iv="${c.id}:${q.aid}:${r[0]}" aria-pressed="${v===r[0]}">${r[1]}</button>`).join("")}</span></div>`}).join("")}</section>` : "";
+  const rv = c.interview, ilink = c.itoken ? location.origin + "/interview/" + c.itoken : "";
+  const ivHead = rv ? `<p class="note">They answered in writing. The highlight is what adjacent points at; the rating is yours.</p>`
+    : ilink ? `<p class="note">Send them this link to answer the interview in writing. Their answers appear here.</p><div class="linkbox" style="font-size:12.5px"><span>${esc(ilink)}</span><button class="wbtn sm ghost" data-copytext="${esc(ilink)}">Copy</button></div>${c.email?`<a class="note" href="mailto:${esc(c.email)}?subject=${encodeURIComponent("Next step: " + o.title)}&body=${encodeURIComponent("Thank you for your answer. We would like to know more. Please answer these questions in writing:\n" + ilink)}">Write the email</a>`:""}<span class="note">${esc(S.copied)}</span>`
+    : `<p class="note">The written interview link appears once you ask to meet.</p>`;
+  const iv = (st==="meet"||st==="passed"||st==="hired") ? `<section><div class="mini">Interview</div>${ivHead}${o.questions.map(q=>{const k=o.activities.findIndex(a=>a.id===q.aid);const v=(c.iv||{})[q.aid];const r=rv&&rv.review.find(x=>x.aid===q.aid);const ans=rv&&rv.answers[q.aid];
+    return `<div class="iq"><span><strong>${num(k)}</strong> ${esc(q.q)}</span>${rv?`<details style="padding:0;border:0" ${r&&r.quote?"":"open"}><summary>${r&&r.quote?`<mark>${esc(r.quote)}</mark>`:"Read the answer"}</summary><p>${esc(ans||"(no answer)")}</p></details><span class="note"><span class="pill s${r?r.level:0}">adjacent reads: ${LV[r?r.level:0]}</span> ${esc(r?r.note:"")}</span><span class="note"><strong>Listen for:</strong> ${esc(q.listen)}</span>`:""}<span class="rate">${[[2,"strong"],[1,"partial"],[0,"weak"]].map(x=>`<button data-iv="${c.id}:${q.aid}:${x[0]}" aria-pressed="${v===x[0]}">${x[1]}</button>`).join("")}</span></div>`}).join("")}</section>` : "";
   return `<div class="head"><button class="wlink" data-go="o-${o.id}" data-tab="cands" style="align-self:flex-start">← ${esc(o.title)}</button></div>
   <div class="cgrid">${evidenceCard(c,o)}
     <aside class="panel"><section><div class="mini">So far</div><div class="tl">${tl.map(x=>`<div>${esc(x)}</div>`).join("")}</div>${c.example?`<span class="wtag" style="align-self:flex-start">example person, fictional</span>`:""}</section>${act}${iv}</aside></div>`; }
@@ -193,6 +208,15 @@ function vMoves(){ const rows = []; ops().forEach(o => o.fields.forEach((f,i) =>
   <p class="note">The example openings start with people who answered and nothing else. Run a candidate through the test and the hire, and the numbers move here and on the opening's field page.</p>`; }
 
 /* ---------- candidate page ---------- */
+function vInterview(){ const it = S.interview, bar = `<div class="wbar"><div class="brand" style="padding:0">adjacent</div><a class="note" href="/privacy">Privacy</a></div>`;
+  if (!it) return bar + `<div class="head"><h1>This interview link is not valid</h1><p>Check the link you were sent.</p></div>`;
+  if (it.done) return bar + `<div class="head"><div class="lab">Sent</div><h1>Your answers are with the employer</h1><p>A person reads every answer and makes the decision. They will write to you at the email you gave.</p></div>`;
+  if (!it.open) return bar + `<div class="head"><h1>This interview is closed</h1><p>Thank you for your interest.</p></div>`;
+  return bar + `<div class="head"><div class="lab">${esc(it.company)} · ${esc(it.code)}</div><h1>A few questions about ${esc(it.title)}</h1>
+    <p>Answer in writing, in your own words, about things that really happened to you in any job. Specific beats polished: what the situation was, what you did, how it ended. There is no time limit.</p></div>
+  ${it.questions.map((x,i)=>`<section class="sheet"><div class="col"><div class="lab">${num(i)} · ${esc(x.activity)}</div><label for="iq${i}" style="font-size:17px">${esc(x.q)}<textarea id="iq${i}" data-iq="${esc(x.aid)}">${esc(S.iform[x.aid]||"")}</textarea></label></div></section>`).join("")}
+  ${S.ivErr?`<p class="warn">${esc(S.ivErr)}</p>`:""}
+  ${S.ivBusy?`<p class="busy">Sending your answers.</p>`:`<div class="wrow"><button class="wbtn" data-act="sendiv">Send my answers</button><span class="note">You can send them once. A person at the company reads them; no decision is made automatically.</span></div>`}`; }
 function vApply(o){ const mine = S.applied && D.cands[S.applied] && D.cands[S.applied].oid===o.id ? D.cands[S.applied] : null;
   const bar = `<div class="wbar"><div class="brand" style="padding:0">adjacent</div><a class="note" href="/privacy">Privacy</a></div>`;
   if (o.open === false) return bar + `<div class="head"><h1>This opening has been filled</h1><p>Thank you for your interest.</p></div>`;
@@ -201,12 +225,15 @@ function vApply(o){ const mine = S.applied && D.cands[S.applied] && D.cands[S.ap
   return bar + `<div class="head"><div class="lab">${esc(o.company||"")}</div><h1>${esc(o.ad.headline||o.title)}</h1>
     <div class="wfacts"><span>${esc(o.pay||"pay not stated")}</span><span>${esc(o.hours||"hours not stated")}</span><span>${esc(o.zone||"location not stated")}</span></div></div>
   <section class="sheet"><div class="lab" style="margin-bottom:6px">What you would do in this job</div><div class="acts">${o.activities.map((a,i)=>`<div class="act"><div class="k">${num(i)}</div><div><h3>${esc(a.name)}</h3><p>${esc(a.detail)}</p></div></div>`).join("")}</div></section>
-  <section class="sheet strongb"><div class="col"><h2 style="font-size:26px">No CV. Tell us what you actually did.</h2>
+  <section class="sheet strongb"><div class="col"><h2 style="font-size:26px">Tell us what you actually did.</h2>
     <p class="note">You don't need experience in this industry. Describe a job you have or had, the way you would tell a friend: what you did on a normal day, with whom, how much of it. Only what you write counts, so be specific.</p>
     <label for="ctext">A normal day in your job<textarea id="ctext" data-c="text" placeholder="For example: I ran the till at a restaurant, balanced the cash at the end of each shift and dealt with customer complaints...">${esc(S.cform.text)}</textarea></label>
     <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><label for="czone">Area where you live<input type="text" id="czone" data-c="zone" value="${esc(S.cform.zone)}"></label>
       <label for="cpay">Pay you expect<input type="text" id="cpay" data-c="pay" value="${esc(S.cform.pay)}"></label><label for="cavail">When you could start<input type="text" id="cavail" data-c="avail" value="${esc(S.cform.avail)}"></label>
       <label for="cemail">Email<input type="text" id="cemail" inputmode="email" autocomplete="email" data-c="email" value="${esc(S.cform.email)}"></label></div>
+    <div class="col" style="gap:6px"><span style="font-size:14px;font-weight:500">CV, optional (PDF, up to 4 MB)</span>
+      ${S.cvFile?`<span class="wrow"><span class="wtag">${esc(S.cvFile.name)}</span><button class="wlink" data-act="nocv">Remove</button></span>`:`<input type="file" id="ccv" accept="application/pdf,.pdf" data-cv="1">`}
+      <span class="note">Your description above is what counts most. The CV is read once for lines about what you did, the file is not kept, and the employer never sees it: no name, age, photo or school reaches them.</span></div>
     <input type="text" data-c="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" value="">
     <label class="chk" for="cconsent"><input type="checkbox" id="cconsent" data-cc="1" ${S.cform.consent?"checked":""}><span>I agree that the employer for this opening can read my answer, and see my email if they ask to meet me. Answers are deleted after 12 months.</span></label>
     ${S.candErr?`<p class="warn">${esc(S.candErr)}</p>`:""}
@@ -223,7 +250,8 @@ function drawLines(o){ const svg = $("#lines"), map = $("#map"); if(!svg||!map||
   svg.innerHTML = h; }
 function render(){ dirty = false; const r = S.route; let body, solo = opts.mode === "apply", cur = "openings", o = null;
   if (!loaded) body = `<p class="busy">Loading.</p>`;
-  else if (solo && !D.openings[opts.openingId]) body = `<div class="wbar"><div class="brand" style="padding:0">adjacent</div></div><div class="head"><h1>This opening does not exist</h1><p>Check the link you were given.</p></div>`;
+  else if (opts.mode === "interview") { body = vInterview(); solo = true; }
+  else if (opts.mode === "apply" && !D.openings[opts.openingId]) body = `<div class="wbar"><div class="brand" style="padding:0">adjacent</div></div><div class="head"><h1>This opening does not exist</h1><p>Check the link you were given.</p></div>`;
   else if (r === "new") body = vNew();
   else if (r === "moves") { body = vMoves(); cur = "moves"; }
   else if (r.startsWith("apply-") && (o = D.openings[r.slice(6)])) { body = vApply(o); solo = true; }
@@ -236,7 +264,7 @@ function render(){ dirty = false; const r = S.route; let body, solo = opts.mode 
     <div class="bot"><span>Openings tagged example are fictional.</span><a href="/admin">Operator admin</a></div></aside><main class="wwrap">${body}</main></div>`;
   if (o && r.startsWith("o-") && (S.tab[o.id]==="fields")) requestAnimationFrame(()=>drawLines(o));
 }
-function go(r){ if (opts.mode === "apply") return; S.route = r; S.copied = ""; try{ if(location.hash.slice(1)!==r) location.hash = r; }catch(e){} render(); window.scrollTo({top:0}); }
+function go(r){ if (opts.mode !== "workspace") return; S.route = r; S.copied = ""; try{ if(location.hash.slice(1)!==r) location.hash = r; }catch(e){} render(); window.scrollTo({top:0}); }
 function copy(txt){ const done = m => { S.copied = m; render(); };
   try { navigator.clipboard.writeText(txt).then(()=>done("Copied."), ()=>done("Could not copy. Select the text and copy it by hand.")); } catch(_){ done("Could not copy. Select the text and copy it by hand."); } }
 
@@ -257,14 +285,17 @@ on(document, "click", e => { const t = e.target.closest("button"); if(!t) return
   if (d.iv) { const [id, aid, v] = d.iv.split(":"); return setCand(id, c => { c.iv = Object.assign({}, c.iv, {[aid]:+v}); }); }
   if (d.act==="create") return createOpening();
   if (d.act==="answer") return submitAnswer(D.openings[S.route.slice(6)]);
+  if (d.act==="sendiv") return submitInterview();
+  if (d.act==="nocv") { S.cvFile = null; return render(); }
+  if (d.copytext) return copy(d.copytext);
 });
-on(document, "change", e => { const d = e.target.dataset; if (d.cc) { S.cform.consent = e.target.checked; return; } if (d.chk) { const [id, i] = d.chk.split(":"); setCand(id, c => { c.test = c.test || {checks:[]}; c.test.checks = c.test.checks || []; c.test.checks[+i] = e.target.checked; for (let k=0;k<c.test.checks.length;k++) c.test.checks[k] = !!c.test.checks[k]; }); } });
-on(document, "input", e => { const d = e.target.dataset; if (d.f) S.form[d.f] = e.target.value; if (d.c) S.cform[d.c] = e.target.value; });
+on(document, "change", e => { const d = e.target.dataset; if (d.cc) { S.cform.consent = e.target.checked; return; } if (d.cv) { S.cvFile = e.target.files && e.target.files[0] || null; return render(); } if (d.chk) { const [id, i] = d.chk.split(":"); setCand(id, c => { c.test = c.test || {checks:[]}; c.test.checks = c.test.checks || []; c.test.checks[+i] = e.target.checked; for (let k=0;k<c.test.checks.length;k++) c.test.checks[k] = !!c.test.checks[k]; }); } });
+on(document, "input", e => { const d = e.target.dataset; if (d.f) S.form[d.f] = e.target.value; if (d.c) S.cform[d.c] = e.target.value; if (d.iq) S.iform[d.iq] = e.target.value; });
 on(document, "focusout", () => { if (dirty) setTimeout(()=>{ if (dirty) softRender(); }, 50); });
 on(window, "resize", () => { const o = S.route.startsWith("o-") && D.openings[S.route.slice(2)]; if (o && S.tab[o.id]==="fields") drawLines(o); });
-on(window, "hashchange", () => { if (opts.mode === "apply") return; const h = location.hash.slice(1) || "openings"; if (h !== S.route) { S.route = h; render(); } });
+on(window, "hashchange", () => { if (opts.mode !== "workspace") return; const h = location.hash.slice(1) || "openings"; if (h !== S.route) { S.route = h; render(); } });
 
-S.route = opts.mode === "apply" ? "apply-" + opts.openingId : (location.hash.slice(1) || "openings");
+S.route = opts.mode === "apply" ? "apply-" + opts.openingId : opts.mode === "interview" ? "interview" : (location.hash.slice(1) || "openings");
 render();
 refresh();
 if (opts.mode === "workspace") {
