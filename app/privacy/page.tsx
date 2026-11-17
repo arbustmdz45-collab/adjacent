@@ -51,7 +51,10 @@ export default function Privacy() {
             meet you. Emails, phone numbers and links inside your description are removed automatically. If you upload a CV,
             it is read once for its text and the file is not kept; the employer never sees the CV, only quoted lines about
             work you did. If the employer asks to meet you, they may send you a link to answer interview questions in
-            writing; AI points the employer at parts of your answers, and a person at the company reads them and decides.
+            writing, or interview you and have your answers transcribed as you speak. In a live interview no recording is kept:
+            the browser turns speech into text, the interviewer corrects it, and only that text is stored. In Chrome the audio
+            is sent to Google's speech service to be turned into text. You are told before it starts. In both cases AI points
+            the employer at parts of your answers, and a person at the company reads them and decides.
           </li>
           <li>
             <strong>Newsletter and pilot requests.</strong> Your email, and for pilots your company and what you tell us about

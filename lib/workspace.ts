@@ -49,7 +49,7 @@ export type WsCandidate = {
   cv?: string; // text read from an uploaded PDF; never shown to the employer, only quoted lines are
   hasCv?: boolean;
   itoken?: string; // the candidate's private interview link
-  interview?: { answers: Record<string, string>; review: InterviewReview[]; at: number };
+  interview?: { answers: Record<string, string>; review: InterviewReview[]; at: number; source?: "written" | "live" };
   example?: boolean;
   created: number;
 };
@@ -354,10 +354,10 @@ export function publicInterview(o: Opening, c: WsCandidate) {
   };
 }
 
-export async function submitInterview(o: Opening, c: WsCandidate, raw: Record<string, unknown>) {
+export async function submitInterview(o: Opening, c: WsCandidate, raw: Record<string, unknown>, source: "written" | "live" = "written") {
   const answers: Record<string, string> = {};
-  for (const x of o.questions) answers[x.aid] = redact(str(raw[x.aid], 2500));
-  const prompt = `A candidate from another field answered the interview questions for an opening in writing. For each question, judge the answer against what a good answer contains.
+  for (const x of o.questions) answers[x.aid] = redact(str(raw[x.aid], 4000));
+  const prompt = `A candidate from another field answered the interview questions for an opening${source === "live" ? ", out loud in an interview; what follows is the transcript, corrected by the interviewer, so expect spoken language and rough edges" : " in writing"}. For each question, judge the answer against what a good answer contains.
 
 <opening>${o.title}</opening>
 ${o.questions.map((x) => `<question id="${x.aid}">
@@ -370,7 +370,7 @@ A good answer: ${x.listen}
 Only what the candidate wrote counts. Never invent or assume experience.
 - level: 2 if the answer describes a specific past situation and contains most of what a good answer contains, 1 if it is specific but partial or general but relevant, 0 if it is empty, vague or off the question.
 - quote: a literal, word-for-word copy of the strongest fragment of that answer (30 words at most). Empty if level is 0.
-- note: one short sentence in English saying what the answer shows and what is missing.
+- note: one short sentence in English saying what the answer shows and what is missing.${source === "live" ? "\nJudge the substance, never how fluent or tidy the speech is." : ""}
 The employer reads every answer and makes the decision. You only point at the evidence.`;
   const r = await ask<{ review?: InterviewReview[] }>(INTERVIEW_TOOL, prompt, SYSTEM);
   const review = o.questions.map((x) => {
@@ -386,6 +386,14 @@ The employer reads every answer and makes the decision. You only point at the ev
     if (level === 0) quote = "";
     return { aid: x.aid, level, quote, note };
   });
-  c.interview = { answers, review, at: Date.now() };
+  c.interview = { answers, review, at: Date.now(), source };
   await q(`update ws_candidates set data = $2 where id = $1`, [c.id, JSON.stringify(c)]);
+  return forEmployer(c);
+}
+
+// The live interview: the employer talks to the person, the browser transcribes, the employer
+// corrects the text, and only then is it read. No audio reaches this server or is stored.
+export async function getCandidate(id: string) {
+  const rows = await q(`select data from ws_candidates where id = $1`, [id]);
+  return rows[0] ? (json(rows[0].data) as WsCandidate) : null;
 }

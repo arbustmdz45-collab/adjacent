@@ -24,7 +24,7 @@ const security = [
   { key: "X-Frame-Options", value: "DENY" },
   // Private links (/r/…, /me/…) carry secrets in the URL: never leak them to other sites.
   { key: "Referrer-Policy", value: "no-referrer" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), interest-cohort=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 

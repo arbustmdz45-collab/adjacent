@@ -180,3 +180,13 @@ adjacent is now built around the employer. `/workspace` is where an employer run
 **Known limits.** One operator password protects the workspace; there are no per-employer accounts yet, so it is single-tenant. Nothing is sent to the candidate automatically: the employer writes to them by email. The rate limit on the public answer route is in memory per instance. The workspace UI is one vanilla module (`components/workspace/engine.ts`) mounted by a React component, ported from the demo; it should become React components if it keeps growing. The employer prompts have not been through the Session 8 and 9 evals yet.
 
 **CV and written interview (added after Session 10).** A candidate can attach a PDF CV on the candidate page. The server reads its text once (`unpdf`), does not store the file, and passes the text to the same evidence call as a second source. A CV line counts only as a literal quote about something the person did, and the row is tagged "from their CV". The CV text is never sent to the employer (`forEmployer` strips it), so name, age and school stay out of the decision. When the employer asks to meet, the candidate gets a private link (`/interview/<token>`) to answer the interview questions in writing. A third call (`return_interview_review`) reads each answer against the question's "listen for" and returns a level and a literal quote; the quote is checked in code. The employer sees the answers, what the model points at, and sets their own rating. The model never rejects anyone.
+
+## The interview, written and live (Session 10)
+
+Two ways in, one record. `submitInterview(o, c, answers, source)` stores `interview = { answers, review, at, source }` either way, and the same literal-quote check applies: a level above 0 is dropped unless its quote appears word for word in that answer.
+
+**Written.** Asking to meet mints a private token (`itoken`); the candidate answers at `/interview/<token>` once. `publicInterview` never sends the employer's "listen for" notes to the candidate.
+
+**Live.** `/workspace`, on a candidate at "to meet" or "passed": the browser's own speech recognition (`webkitSpeechRecognition`, Chrome) transcribes while the employer talks, the employer corrects the text, and `POST /api/workspace/interview` reads it. No audio reaches the server or is stored; only the corrected text is. The page requires the employer to confirm they told the person first, and `Permissions-Policy` now allows `microphone=(self)`. Where the browser has no speech recognition the same screen takes typed notes.
+
+The rating stays the employer's: adjacent reports a level and a quote, and the employer sets strong, partial or weak per question.

@@ -39,7 +39,7 @@ function save(col, obj){
 function softRender(){ const a = document.activeElement; if (a && root.contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== "checkbox") { dirty = true; return; } render(); }
 
 /* ---------- helpers ---------- */
-const S = { route:"openings", tab:{}, fld:0, kit:"ad", busy:"", err:"", storeNote:"", form:{company:"",raw:"",pay:"",hours:"",zone:""}, cform:{text:"",zone:"",pay:"",avail:"",email:"",consent:false,website:""}, candBusy:false, candErr:"", applied:null, copied:"", cvFile:null, interview:null, iform:{}, ivBusy:false, ivErr:"" };
+const S = { route:"openings", tab:{}, fld:0, kit:"ad", busy:"", err:"", storeNote:"", form:{company:"",raw:"",pay:"",hours:"",zone:""}, cform:{text:"",zone:"",pay:"",avail:"",email:"",consent:false,website:""}, candBusy:false, candErr:"", applied:null, copied:"", cvFile:null, interview:null, iform:{}, ivBusy:false, ivErr:"", live:null };
 const $ = s => root.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm = s => String(s||"").toLowerCase().replace(/[“”"«»'’]/g,"").replace(/\s+/g," ").trim();
@@ -85,6 +85,40 @@ async function submitInterview(){
   catch(e){ S.ivBusy = false; S.ivErr = e.message; render(); }
 }
 function setCand(id, fn){ const c = clone(D.cands[id]); fn(c); save("cands", c); }
+
+/* ---------- the live interview: the browser transcribes, the employer corrects, then it is read ---------- */
+const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+let rec = null, recBase = "";
+function currentQ(){ const L = S.live; if (!L) return null; const o = D.openings[L.oid]; return o ? o.questions[L.qi] : null; }
+function startLive(){
+  const L = S.live; if (!SR || !L) return;
+  const q = currentQ(); if (!q) return;
+  try { rec = new SR(); } catch(e){ L.err = "This browser would not start the microphone."; return render(); }
+  rec.lang = L.lang; rec.continuous = true; rec.interimResults = true;
+  recBase = L.answers[q.aid] || "";
+  rec.onresult = e => {
+    let done = "", open = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) done += t; else open += t;
+    }
+    if (done) recBase = (recBase ? recBase.trimEnd() + " " : "") + done.trim();
+    const box = $("#live-text");
+    if (box) { box.value = (recBase + (open ? " " + open : "")).trim(); box.scrollTop = box.scrollHeight; }
+    L.answers[q.aid] = recBase.trim();
+  };
+  rec.onerror = ev => { L.listening = false; L.err = ev.error === "not-allowed" ? "The microphone was blocked. Allow it for this site and start again." : "The microphone stopped: " + ev.error + "."; rec = null; render(); };
+  rec.onend = () => { if (S.live && S.live.listening && rec) { try { rec.start(); return; } catch(e){} } rec = null; };
+  try { rec.start(); L.listening = true; L.err = ""; } catch(e){ L.err = "The microphone could not start."; }
+  render();
+}
+function stopLive(){ const L = S.live; if (L) L.listening = false; if (rec) { const r = rec; rec = null; try { r.stop(); } catch(e){} } if (L) render(); }
+async function readLive(){
+  const L = S.live; if (!L) return; stopLive();
+  L.busy = true; L.err = ""; render();
+  try { const { doc } = await api("/api/workspace/interview", { id:L.id, answers:L.answers }); D.cands[doc.id] = doc; S.live = null; go("c-" + doc.id); }
+  catch(e){ L.busy = false; L.err = e.message; render(); }
+}
 
 /* ---------- employer views ---------- */
 function vOpenings(){ const list = ops(); const todo = [];
@@ -193,14 +227,43 @@ function vCand(c, o){ const st = c.status, test = c.test || {checks:[]}, crit = 
   if (st==="hired") act = `<section><div class="mini">90-day check</div>${c.d90?`<p class="note">Recorded. This result now counts in the track record for ${esc(c.fi>=0?o.fields[c.fi].name:"this field")}.</p>`:`<p class="note">Record this 90 days after the start date.</p><div class="wrow"><button class="wbtn" data-d90="${c.id}:stayed">Still in the job</button><button class="wbtn ghost" data-d90="${c.id}:left">Left</button></div>`}</section>`;
   if (st==="failed"||st==="declined") act = `<section><div class="mini">Closed</div><div class="wrow"><button class="wbtn ghost sm" data-st="${c.id}:new">Move back to answered</button></div></section>`;
   const rv = c.interview, ilink = c.itoken ? location.origin + "/interview/" + c.itoken : "";
-  const ivHead = rv ? `<p class="note">They answered in writing. The highlight is what adjacent points at; the rating is yours.</p>`
-    : ilink ? `<p class="note">Send them this link to answer the interview in writing. Their answers appear here.</p><div class="linkbox" style="font-size:12.5px"><span>${esc(ilink)}</span><button class="wbtn sm ghost" data-copytext="${esc(ilink)}">Copy</button></div>${c.email?`<a class="note" href="mailto:${esc(c.email)}?subject=${encodeURIComponent("Next step: " + o.title)}&body=${encodeURIComponent("Thank you for your answer. We would like to know more. Please answer these questions in writing:\n" + ilink)}">Write the email</a>`:""}<span class="note">${esc(S.copied)}</span>`
+  const liveBtn = (st==="meet"||st==="passed") ? `<button class="wbtn sm" data-live="${c.id}">${rv ? "Interview again, live" : "Interview them now"}</button>` : "";
+  const ivHead = rv ? `<p class="note">${rv.source === "live" ? "You interviewed them and corrected the transcript." : "They answered in writing."} The highlight is what adjacent points at; the rating is yours.</p>${liveBtn}`
+    : ilink ? `<p class="note">Interview them live and let the browser transcribe it, or send this link for them to answer in writing.</p>${liveBtn}<p class="note"><div class="linkbox" style="font-size:12.5px"><span>${esc(ilink)}</span><button class="wbtn sm ghost" data-copytext="${esc(ilink)}">Copy</button></div></p>${c.email?`<a class="note" href="mailto:${esc(c.email)}?subject=${encodeURIComponent("Next step: " + o.title)}&body=${encodeURIComponent("Thank you for your answer. We would like to know more. Please answer these questions in writing:\n" + ilink)}">Write the email</a>`:""}<span class="note">${esc(S.copied)}</span>`
     : `<p class="note">The written interview link appears once you ask to meet.</p>`;
   const iv = (st==="meet"||st==="passed"||st==="hired") ? `<section><div class="mini">Interview</div>${ivHead}${o.questions.map(q=>{const k=o.activities.findIndex(a=>a.id===q.aid);const v=(c.iv||{})[q.aid];const r=rv&&rv.review.find(x=>x.aid===q.aid);const ans=rv&&rv.answers[q.aid];
     return `<div class="iq"><span><strong>${num(k)}</strong> ${esc(q.q)}</span>${rv?`<details style="padding:0;border:0" ${r&&r.quote?"":"open"}><summary>${r&&r.quote?`<mark>${esc(r.quote)}</mark>`:"Read the answer"}</summary><p>${esc(ans||"(no answer)")}</p></details><span class="note"><span class="pill s${r?r.level:0}">adjacent reads: ${LV[r?r.level:0]}</span> ${esc(r?r.note:"")}</span><span class="note"><strong>Listen for:</strong> ${esc(q.listen)}</span>`:""}<span class="rate">${[[2,"strong"],[1,"partial"],[0,"weak"]].map(x=>`<button data-iv="${c.id}:${q.aid}:${x[0]}" aria-pressed="${v===x[0]}">${x[1]}</button>`).join("")}</span></div>`}).join("")}</section>` : "";
   return `<div class="head"><button class="wlink" data-go="o-${o.id}" data-tab="cands" style="align-self:flex-start">← ${esc(o.title)}</button></div>
   <div class="cgrid">${evidenceCard(c,o)}
     <aside class="panel"><section><div class="mini">So far</div><div class="tl">${tl.map(x=>`<div>${esc(x)}</div>`).join("")}</div>${c.example?`<span class="wtag" style="align-self:flex-start">example person, fictional</span>`:""}</section>${act}${iv}</aside></div>`; }
+
+function vLive(){ const L = S.live, o = D.openings[L.oid], c = D.cands[L.id];
+  if (!o || !c) { S.live = null; return vOpenings(); }
+  const q = o.questions[L.qi], k = o.activities.findIndex(a => a.id === q.aid), answered = o.questions.filter(x => (L.answers[x.aid]||"").trim().split(/\s+/).length >= 8).length;
+  return `<div class="head"><button class="wlink" data-go="c-${c.id}" style="align-self:flex-start">← ${esc(c.code)}</button>
+    <div class="wrow" style="justify-content:space-between;align-items:flex-start"><div class="head"><div class="lab">${esc(o.title)} · question ${L.qi+1} of ${o.questions.length}</div><h1 style="font-size:clamp(21px,2.3vw,27px);max-width:46ch">${esc(q.q)}</h1></div>
+    <span class="wtag" style="margin-top:6px">${answered} of ${o.questions.length} answered</span></div>
+    <p class="note"><strong>Listen for:</strong> ${esc(q.listen)}</p></div>
+  ${L.told ? "" : `<section class="sheet strongb"><div class="col"><div class="mini">Before you start</div>
+    <p class="note">Tell the person their answers are being transcribed so they can be checked against the job, that no recording is kept, and that you will read the text yourself. ${SR ? "The transcription happens in your browser; in Chrome the audio goes to Google's speech service to be turned into text." : ""}</p>
+    <label class="chk" for="told"><input type="checkbox" id="told" data-told="1"><span>I have told them, and they agreed.</span></label></div></section>`}
+  <section class="sheet"><div class="col">
+    <div class="wrow" style="justify-content:space-between">
+      <span class="mini" style="margin:0">${num(k)} ${esc(o.activities[k] ? o.activities[k].name : "")}</span>
+      <span class="wrow">${SR ? `<select data-lang="1" aria-label="Spoken language" style="background:var(--surface);border:1px solid var(--line);padding:7px 10px">${[["es-MX","Spanish (Mexico)"],["en-US","English"]].map(x=>`<option value="${x[0]}" ${L.lang===x[0]?"selected":""}>${x[1]}</option>`).join("")}</select>
+        <button class="wbtn ${L.listening?"":"ghost"}" data-mic="1" ${L.told?"":"disabled"}>${L.listening ? "Stop" : ((L.answers[q.aid]||"") ? "Keep recording" : "Start recording")}</button>` : ""}</span>
+    </div>
+    ${L.listening ? `<p class="busy">Listening. Speak normally; the text appears as they talk.</p>` : ""}
+    <label for="live-text">What they said${SR ? ", as transcribed. Correct anything that came out wrong." : ". Type or paste it: this browser has no speech recognition, so use Chrome if you want it transcribed."}
+      <textarea id="live-text" data-livebox="1" style="min-height:210px">${esc(L.answers[q.aid] || "")}</textarea></label>
+    ${L.err ? `<p class="warn">${esc(L.err)}</p>` : ""}
+    <div class="wrow" style="justify-content:space-between">
+      <span class="wrow">${L.qi > 0 ? `<button class="wbtn ghost sm" data-qi="${L.qi-1}">Previous</button>` : ""}
+        ${L.qi < o.questions.length-1 ? `<button class="wbtn sm" data-qi="${L.qi+1}">Next question</button>` : ""}</span>
+      ${L.busy ? `<p class="busy">Reading the answers against the activities.</p>` : `<button class="wbtn" data-act="readlive" ${answered?"":"disabled"}>Read the answers</button>`}
+    </div>
+    <p class="note">Only the text counts. adjacent points at a literal quote per answer and you set the rating. No audio is stored.</p>
+  </div></section>`; }
 
 function vMoves(){ const rows = []; ops().forEach(o => o.fields.forEach((f,i) => { const r = record(o.id,i); if (r.answered) rows.push([f.name, o.title, r]); }));
   const cell = v => `<span class="n ${v?"":"z"}">${v}</span>`;
@@ -255,6 +318,7 @@ function render(){ dirty = false; const r = S.route; let body, solo = opts.mode 
   else if (opts.mode === "interview") { body = vInterview(); solo = true; }
   else if (opts.mode === "apply" && !D.openings[opts.openingId]) body = `<div class="wbar"><div class="brand" style="padding:0">adjacent</div></div><div class="head"><h1>This opening does not exist</h1><p>Check the link you were given.</p></div>`;
   else if (r === "new") body = vNew();
+  else if (r.startsWith("live-") && S.live) body = vLive();
   else if (r === "moves") { body = vMoves(); cur = "moves"; }
   else if (r.startsWith("apply-") && (o = D.openings[r.slice(6)])) { body = vApply(o); solo = true; }
   else if (r.startsWith("o-") && (o = D.openings[r.slice(2)])) body = vOpening(o);
@@ -285,14 +349,22 @@ on(document, "click", e => { const t = e.target.closest("button"); if(!t) return
   if (d.test) { const [id, r] = d.test.split(":"); return setCand(id, c => { c.test = Object.assign({checks:[]}, c.test, {result:r}); c.status = r==="pass" ? "passed" : "failed"; }); }
   if (d.d90) { const [id, r] = d.d90.split(":"); return setCand(id, c => { c.d90 = r; }); }
   if (d.iv) { const [id, aid, v] = d.iv.split(":"); return setCand(id, c => { c.iv = Object.assign({}, c.iv, {[aid]:+v}); }); }
+  if (d.live) { const c = D.cands[d.live]; S.live = { id:c.id, oid:c.oid, qi:0, answers: Object.assign({}, (c.interview||{}).answers), lang:"es-MX", listening:false, told:false, busy:false, err:"" }; return go("live-" + c.id); }
+  if (d.qi) { stopLive(); S.live.qi = +d.qi; return render(); }
+  if (d.mic) return S.live.listening ? stopLive() : startLive();
+  if (d.act==="readlive") return readLive();
   if (d.act==="create") return createOpening();
   if (d.act==="answer") return submitAnswer(D.openings[S.route.slice(6)]);
   if (d.act==="sendiv") return submitInterview();
   if (d.act==="nocv") { S.cvFile = null; return render(); }
   if (d.copytext) return copy(d.copytext);
 });
-on(document, "change", e => { const d = e.target.dataset; if (d.cc) { S.cform.consent = e.target.checked; return; } if (d.cv) { S.cvFile = e.target.files && e.target.files[0] || null; return render(); } if (d.chk) { const [id, i] = d.chk.split(":"); setCand(id, c => { c.test = c.test || {checks:[]}; c.test.checks = c.test.checks || []; c.test.checks[+i] = e.target.checked; for (let k=0;k<c.test.checks.length;k++) c.test.checks[k] = !!c.test.checks[k]; }); } });
-on(document, "input", e => { const d = e.target.dataset; if (d.f) S.form[d.f] = e.target.value; if (d.c) S.cform[d.c] = e.target.value; if (d.iq) S.iform[d.iq] = e.target.value; });
+on(document, "change", e => { const d = e.target.dataset;
+  if (d.told) { S.live.told = e.target.checked; return render(); }
+  if (d.lang) { S.live.lang = e.target.value; if (S.live.listening) { stopLive(); startLive(); } return; }
+  if (d.cc) { S.cform.consent = e.target.checked; return; } if (d.cv) { S.cvFile = e.target.files && e.target.files[0] || null; return render(); } if (d.chk) { const [id, i] = d.chk.split(":"); setCand(id, c => { c.test = c.test || {checks:[]}; c.test.checks = c.test.checks || []; c.test.checks[+i] = e.target.checked; for (let k=0;k<c.test.checks.length;k++) c.test.checks[k] = !!c.test.checks[k]; }); } });
+on(document, "input", e => { const d = e.target.dataset; if (d.f) S.form[d.f] = e.target.value; if (d.c) S.cform[d.c] = e.target.value; if (d.iq) S.iform[d.iq] = e.target.value;
+  if (d.livebox && S.live) { const q = currentQ(); if (q) { S.live.answers[q.aid] = e.target.value; recBase = e.target.value; } } });
 on(document, "focusout", () => { if (dirty) setTimeout(()=>{ if (dirty) softRender(); }, 50); });
 on(window, "resize", () => { const o = S.route.startsWith("o-") && D.openings[S.route.slice(2)]; if (o && S.tab[o.id]==="fields") drawLines(o); });
 on(window, "hashchange", () => { if (opts.mode !== "workspace") return; const h = location.hash.slice(1) || "openings"; if (h !== S.route) { S.route = h; render(); } });
@@ -306,5 +378,5 @@ if (opts.mode === "workspace") {
   on(window, "focus", () => refresh());
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { const o = S.route.startsWith("o-") && D.openings[S.route.slice(2)]; if (o && S.tab[o.id]==="fields") drawLines(o); });
-return () => { ac.abort(); root.innerHTML = ""; };
+return () => { stopLive(); ac.abort(); root.innerHTML = ""; };
 }
