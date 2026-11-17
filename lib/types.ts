@@ -27,6 +27,7 @@ export type Field = {
   say_it: string[]; // CV lines: their real experience in the new field's vocabulary
   why_weak: string | null; // required when strength is "weak"
   proven_move_id?: string | null; // set by the model when a proven move fits
+  same_job_check?: string; // what is new about a normal day there (Session 8 eval fix)
   proven?: { from: string; to: string; hired: number; retained: number } | null; // real counts, attached by the server
 };
 
