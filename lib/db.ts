@@ -81,8 +81,20 @@ create table if not exists ws_meta (
 
 let runner: Promise<Runner> | null = null;
 
+// Vercel's database integrations often add a prefix (Neon gives ADJ_CV_STORE_DATABASE_URL and
+// friends), so take the first pooled connection string we recognise.
+export function databaseUrl() {
+  const direct = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (direct) return direct;
+  const skip = /UNPOOLED|NON_POOLING|NO_SSL|PRISMA/;
+  const key = Object.keys(process.env)
+    .filter((k) => /(_DATABASE_URL|_POSTGRES_URL)$/.test(k) && !skip.test(k))
+    .sort((a, b) => a.length - b.length)[0];
+  return key ? process.env[key] : undefined;
+}
+
 async function connect(): Promise<Runner> {
-  const url = process.env.DATABASE_URL;
+  const url = databaseUrl();
   if (url) {
     const postgres = (await import("postgres")).default;
     const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
