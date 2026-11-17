@@ -43,6 +43,9 @@ app/api/analyse/route.ts  The tool's API route. Steps: capabilities, fields, rep
 app/api/subscribe/route.ts  Newsletter and employer pilot requests, forwarded to LEADS_WEBHOOK_URL
 app/api/pool/route.ts     "Let employers find me": saves a profile to the pool, with consent
 app/admin/                Operator area: roles, pool, proven moves (ADMIN_PASSWORD)
+app/workspace/            Employer workspace: openings, pipeline, track record (same sign-in for now)
+app/apply/[id]/           Public candidate page for one opening: no CV, evidence per activity
+lib/workspace.ts          Workspace prompts, the literal-quote check, and storage
 app/r/[token]/            Private employer link for one role
 app/me/[token]/           A candidate's private page to see and delete their profile
 lib/db.ts                 Postgres (DATABASE_URL), or an embedded local database for development
@@ -88,5 +91,8 @@ npm run dev
 2. Add a Postgres database: in the Vercel project, Storage → Create → Neon (free tier). It sets `DATABASE_URL` for you.
 3. Add the environment variables from `.env.example`: `ANTHROPIC_API_KEY`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `CRON_SECRET`, `LEADS_WEBHOOK_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_CONTROLLER_NAME` and `NEXT_PUBLIC_CONTACT_EMAIL`. Pick an EU region for the database.
 4. Deploy. The tables are created on first use.
+5. Sign in at `/admin/login` with `ADMIN_PASSWORD` (12 characters or more), then open `/workspace`. Each opening has a public candidate page at `/apply/<id>`.
+
+The workspace starts with three fictional example openings. Set `WORKSPACE_EXAMPLES=0` before the first visit to start empty.
 
 The rate limit is per server instance and held in memory. It stops casual abuse but won't hold up under real traffic, so move it to a shared store such as Upstash Redis before you share the link widely.

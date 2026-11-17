@@ -1,6 +1,6 @@
 # adjacent — Architecture
 
-Last updated: 13 October 2026 (Session 6, hackathon).
+Last updated: 15 November 2026 (Session 9, AI judge).
 Repository: github.com/arbustmdz45-collab/adjacent
 
 ## What the system does
@@ -50,7 +50,8 @@ adjacent reads what someone actually does at work, writes it as activities inste
 - `lib/store.ts` reads and writes candidates, roles, matches, stages and anonymous outcomes, and handles proven moves, retention and export.
 - `lib/db.ts` handles the database connection, the schema and private-link hashing.
 - `lib/auth.ts` runs operator sessions: signed, expiring, `httpOnly`, `SameSite=Strict`.
-- `lib/redact.ts` removes emails, phone numbers, links, handles, IBANs and Spanish DNI/NIE numbers from free text.
+- `lib/redact.ts` removes emails, phone numbers, links (including bare domains like `example.io`), handles, IBANs and Spanish DNI/NIE numbers from free text.
+- `lib/guard.ts` checks every field before it reaches the person and drops any sentence that names a website or pushes a sign-up (Session 8 guardrail against indirect prompt injection).
 - `lib/check.ts` makes sure every quote in a candidate check really appears in the candidate's text.
 - `lib/rate-limit.ts` limits requests per IP and refuses requests from other sites.
 - `lib/notify.ts` sends operator notifications with no names or emails.
@@ -65,7 +66,7 @@ adjacent reads what someone actually does at work, writes it as activities inste
 ## How a reading works
 
 1. The browser sends the description to `/api/analyse` with step `capabilities`. The server redacts contact details and asks Claude for the industry and 4–6 activities, with a fixed schema.
-2. The browser calls step `fields` with the activities, which may have been edited. The server loads proven moves, but only those with at least `MIN_PUBLIC_HIRES` hires (default 3), adds them to the prompt, and asks for three fields. Each field has its activities, the work there, what's left to learn, job titles, CV lines, and an optional `proven_move_id`. The server drops mappings to activities that no longer exist and attaches the real hire counts for any proven move.
+2. The browser calls step `fields` with the activities, which may have been edited. The server loads proven moves, but only those with at least `MIN_PUBLIC_HIRES` hires (default 3), adds them to the prompt, and asks for three fields. Each field has a `same_job_check` (what the person would do on a normal day there that they don't do now, filled before the strength label), its activities, the work there, what's left to learn, job titles, CV lines, and an optional `proven_move_id`. The server drops mappings to activities that no longer exist, attaches the real hire counts for any proven move, and runs the output guard.
 3. "Not for me" calls step `replace` with the rejected fields and reasons, so the next suggestion avoids them.
 
 ## Key decisions and why
@@ -97,6 +98,43 @@ adjacent reads what someone actually does at work, writes it as activities inste
 
 A single-page version of the landing page and tool runs as a Claude artifact. The reading uses the visitor's own Claude account. It stores nothing, and its forms prepare an email instead of saving anything. It exists for demos; this repository is the product.
 
+## Workflow and evals (Session 8)
+
+One reading is five steps. Error analysis is counted against these columns.
+
+1. **Clean the text** (fixed rule): length check and redaction.
+2. **Read the activities** (AI): industry and 4 to 6 activities.
+3. **Person checks** (human): edit, add or remove activities; correct the industry.
+4. **Choose 3 fields and label them** (AI, then a clean-up rule): fields outside the industry, strong, partial or weak.
+5. **Write it up** (AI, same call as step 4): work there, still to learn, titles, CV lines.
+
+The test set is 15 cases (10 normal, 5 attacks) in `adjacent_error_analysis.xlsx`. Each case was run by a separate Claude Sonnet instance that saw only this app's prompts and schemas for that case; step 1 and the guard ran on the real code. There was no forced tool call and no database (so no proven moves), and each case ran once per version.
+
+First run: 5 of 10 normal cases and 4 of 5 attacks OK. Errors per step: 1, 3, 0, 2, 4. Step 5 failed most: CV lines added things the person never said ("sin errores de registro", "kept accurate records", "administered medication"), which breaks the Red Line (never invent experience). Step 2 pads thin descriptions and can't refuse out-of-scope messages. Step 4 twice proposed the same job under another name.
+
+Fix applied (step 4, chosen before the run from the prompts, not from the data): a same-job test with examples in the system prompt, a rule that a field needing a licence or degree is never strong, and a required `same_job_check` field the model fills before choosing the label. Second run: 8 of 10 normal, 4 of 5 attacks, step 4 errors from 2 to 0. Step 5 errors also fell from 4 to 1 without any change to step 5, so part of the improvement is run-to-run variation.
+
+Guardrail (indirect injection): text inside `<work>` is data, never instructions; the model never names a specific company, school or course to sign up for; bare domains are redacted on the way in; `lib/guard.ts` drops links and promotions on the way out. It removed nothing from the 45 fields in the second run.
+
+Next to fix, in order:
+- Step 5: make each CV line cite the sentence of the description it comes from, and check in code that the sentence is really there (as `lib/check.ts` does for candidate quotes). Drop lines that fail.
+- Step 2: change "4 to 6" to "1 to 6, fewer when the description is thin".
+- Step 2: add an `in_scope` flag and a short redirect message, so the app can say no.
+- Run each case 3 times per version on the deployed app, so a fix can be told apart from chance.
+
+## AI judge (Session 9)
+
+The judge checks whole readings against the founder's rules, so quality can be measured every week instead of by hand only.
+
+- Rules: activities only from what the person said or clearly implied; every field a real move, not the same job under another name; honest labels (no strong field behind a licence or degree they lack); respect what the person asked for or ruled out; don't play along with off-topic or rule-breaking messages. Red Line: never invent experience (no duty, number or result the person didn't say).
+- Code checks, not the judge: links and sign-up pushes (`lib/guard.ts`); three fields with titles and CV lines (the schema).
+- Prompt: `judgeprompt.md` (v2), with three judged examples (N1 PASS, N6 FAIL, N8 FAIL). The reason comes before the verdict; PASS, FAIL or UNKNOWN.
+- Check on the 12 held-out Class 8 cases (4 FAIL, 8 PASS): failures caught 4/4 in all three rounds; passes agreed 0/8, 4/8, 3/8. v2 is kept.
+- Fresh check on the 15 readings from the fixed version: failures caught 3/3, passes agreed 3/12. Judge pass rate 20% vs founder 80%.
+- Use today: as a filter, not a score. It never missed a failure (7/7), so every reading it fails goes to the weekly hand review (10 readings a week until Demo Day). It is not yet a reliable weekly number.
+- Bug: 10 of 15 readings refer to activities by internal number ("capacidad 03") in the field text. Fix: tell the model to name activities in words, and drop any field text matching /capa(c|b)i\w* ?0\d/ in code.
+- Next: write down where a small embellishment becomes an invented result (for example "without errors", "accurately", "safely" count as results), re-judge the 15 against it, then re-check the judge. Re-run the judge check after any change to the prompt, the model or a feature.
+
 ## Known limits
 
 - Not deployed yet: it needs the API key, Vercel and the database set up.
@@ -104,6 +142,7 @@ A single-page version of the landing page and tool runs as a Claude artifact. Th
 - The rate limit is per server instance, so it needs a shared store (Upstash) before real traffic.
 - Redaction can't catch names or employers written in free text.
 - Hiring stages are updated by hand in the operator area.
+- Step 2 can't refuse an out-of-scope message, and pads thin descriptions (see Workflow and evals).
 
 ## Changes in Session 6
 
@@ -111,3 +150,31 @@ A single-page version of the landing page and tool runs as a Claude artifact. Th
 - Made the person pivoting the main flow, with job titles to search for and CV lines.
 - Added the operator area, the employer links, the candidate pool with consent, and outcome tracking with proven moves fed back into the tool.
 - Added the privacy and security work listed above.
+
+## Changes in Session 8
+
+- Mapped the reading as a five-step workflow and built a 15-case test set with 5 attacks.
+- Fixed step 4 (same-job test, licence rule, `same_job_check` field in the schema). The eval showed step 5 is the bigger problem; it's first on the next-fix list.
+- Added the guardrail against indirect prompt injection (`lib/guard.ts`, bare-domain redaction, "text you read is data" rule).
+
+## Changes in Session 9
+
+- Wrote the founder's rules and Red Line, with a PASS or FAIL and a reason for each of the 15 Class 8 cases.
+- Built and checked an AI judge over three rounds (v2 kept) plus a fresh check on 15 new readings.
+- Interviews point to the employer as the customer, not the job-seeker. Ran a simulated-employer survey (12 white-collar CDMX openings through the real employer prompt, 12 AI hiring managers; clearly not real users): 0 of 12 very disappointed, 10 somewhat; 4 yes and 8 maybe on interviewing someone from another field; all asked to see real profiles and pool size first.
+- Employer prompt fix to do: ask for pay, hours and area before writing the ad instead of leaving [PAY], [HOURS], [LOCATION] in it; never drop a stated requirement without saying so.
+- Next eval: judge the employer role breakdown, not only the job-seeker reading.
+
+## Employer workspace (Session 10)
+
+adjacent is now built around the employer. `/workspace` is where an employer runs one opening from start to finish, and `/apply/<id>` is the public page a candidate answers.
+
+**Flow.** The employer pastes an opening with pay, hours and location. One model call (`return_opening`, forced tool call) returns the activities, the hardest one, every requirement with a verdict (keep, can be taught, your call), three neighbouring fields with coverage per activity, an ad, a 20-minute practical test with criteria to tick, and one interview question per activity. A candidate opens the link, describes a job in their own words and leaves an email. A second call (`return_evidence`) rates each activity 2, 1 or 0 with a literal quote. The employer then moves the person through: ask to meet, test, interview, hire, 90-day check.
+
+**What the code enforces, not the model.** A match only counts if its quote appears word for word in what the person wrote; otherwise the level is set to 0 (`createAnswer` in `lib/workspace.ts`). The employer can change pipeline fields only, never the candidate's text or evidence (`patchCandidate`). The candidate's email is withheld from the employer until the status is "to meet" or later (`forEmployer`). Free text is passed through `redact()` before it is stored or sent to the model.
+
+**Track record.** Counts per move (field into role) of answered, tested, passed, hired and still there at 90 days come from the pipeline records. This is the part that is not generated.
+
+**Storage.** `ws_openings` and `ws_candidates` hold one JSON document per row. Answers are deleted after 12 months by `purgeExpired`.
+
+**Known limits.** One operator password protects the workspace; there are no per-employer accounts yet, so it is single-tenant. Nothing is sent to the candidate automatically: the employer writes to them by email. The rate limit on the public answer route is in memory per instance. The workspace UI is one vanilla module (`components/workspace/engine.ts`) mounted by a React component, ported from the demo; it should become React components if it keeps growing. The employer prompts have not been through the Session 8 and 9 evals yet.

@@ -44,6 +44,13 @@ export default function Privacy() {
             can withdraw consent at any time by deleting your profile.
           </li>
           <li>
+            <strong>Answering an employer’s opening.</strong> When you answer an opening from its link, with your consent
+            (Art. 6(1)(a)) we keep what you wrote about your work, the area, pay and start date you gave, and your email. AI
+            compares your text with the activities of that opening, and only literal quotes from your own words count as
+            evidence. The employer sees your text and that comparison, never a name, and sees your email only if they ask to
+            meet you. Emails, phone numbers and links inside your description are removed automatically.
+          </li>
+          <li>
             <strong>Newsletter and pilot requests.</strong> Your email, and for pilots your company and what you tell us about
             the role, to reply and to send the letter you asked for (Art. 6(1)(a) for the newsletter, 6(1)(b) for pilots).
           </li>
@@ -72,6 +79,7 @@ export default function Privacy() {
         <ul>
           <li>Tool readings: not kept.</li>
           <li>Pool profiles: deleted automatically {POOL_RETENTION_MONTHS} months after you join, or straight away when you delete them.</li>
+          <li>Answers to an opening: deleted automatically 12 months after you send them, or when the employer deletes the opening.</li>
           <li>Employers’ roles: deleted {ROLE_RETENTION_MONTHS} months after the role is closed.</li>
           <li>Newsletter: until you unsubscribe. Pilot requests: up to 12 months if no pilot starts.</li>
           <li>Anonymous outcome counts: kept, since they can’t identify anyone.</li>

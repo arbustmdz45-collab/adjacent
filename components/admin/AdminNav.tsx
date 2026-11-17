@@ -19,6 +19,7 @@ export default function AdminNav({ current }: { current: "roles" | "pool" | "mov
             {item("roles", "/admin", "ROLES")}
             {item("pool", "/admin/pool", "POOL")}
             {item("moves", "/admin/moves", "PROVEN MOVES")}
+            <Link href="/workspace">WORKSPACE</Link>
           </div>
         </div>
         <form action={logout}>
