@@ -4,6 +4,7 @@ import { CANDIDATE_TOOL, HIRING_SYSTEM, candidatePrompt } from "@/lib/hiring-pro
 import { ask } from "@/lib/ai";
 import { checkAgainst } from "@/lib/check";
 import { redact } from "@/lib/redact";
+import { guardField } from "@/lib/guard";
 import { describeMoves, provenMoves, type ProvenMove } from "@/lib/store";
 import { TOOLS, capabilitiesPrompt, fieldsPrompt, replacePrompt } from "@/lib/prompt";
 import type { AnalyseRequest, CandidateResponse, Capability, Field } from "@/lib/types";
@@ -46,14 +47,14 @@ async function loadMoves(): Promise<ProvenMove[]> {
 function clean(field: Field, caps: Capability[], moves: ProvenMove[] = []): Field {
   const ids = new Set(caps.map((c) => c.id));
   const move = field.proven_move_id ? moves.find((m) => m.key === field.proven_move_id) : undefined;
-  return {
+  return guardField({
     proven: move ? { from: move.from, to: move.to, hired: move.hired, retained: move.retained } : null,
     ...field,
     maps: (field.maps || []).filter((m) => ids.has(m.capability_id)),
     titles: Array.isArray(field.titles) ? field.titles.filter((t) => typeof t === "string").slice(0, 4) : [],
     say_it: Array.isArray(field.say_it) ? field.say_it.filter((t) => typeof t === "string").slice(0, 3) : [],
     why_weak: field.strength === "weak" ? field.why_weak || null : null,
-  };
+  }).field;
 }
 
 const MAX_CANDIDATE_CHARS = 12000;

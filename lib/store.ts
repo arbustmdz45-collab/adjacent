@@ -195,7 +195,9 @@ export async function purgeExpired() {
   const roles = await q(
     `delete from roles where status = 'closed' and closed_at < now() - interval '${ROLE_RETENTION_MONTHS} months' returning id`,
   );
-  return { candidates: people.length, roles: roles.length };
+  // Workspace answers (free text from the candidate page) are kept 12 months, then deleted.
+  const answers = await q(`delete from ws_candidates where created_at < now() - interval '12 months' returning id`);
+  return { candidates: people.length, roles: roles.length, answers: answers.length };
 }
 
 // ---------- Matches ----------

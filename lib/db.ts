@@ -62,6 +62,21 @@ create table if not exists matches (
   updated_at timestamptz not null default now(),
   unique (role_id, candidate_id)
 );
+create table if not exists ws_openings (
+  id text primary key,
+  data jsonb not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists ws_candidates (
+  id text primary key,
+  opening_id text not null references ws_openings(id) on delete cascade,
+  data jsonb not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists ws_meta (
+  key text primary key,
+  value text not null
+);
 `;
 
 let runner: Promise<Runner> | null = null;

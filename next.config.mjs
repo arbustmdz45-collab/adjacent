@@ -41,6 +41,8 @@ const nextConfig = {
       { source: "/:path*", headers: security },
       { source: "/admin/:path*", headers: privatePage },
       { source: "/r/:path*", headers: privatePage },
+      { source: "/workspace/:path*", headers: privatePage },
+      { source: "/apply/:path*", headers: privatePage },
       { source: "/me/:path*", headers: privatePage },
       { source: "/api/:path*", headers: privatePage },
     ];
