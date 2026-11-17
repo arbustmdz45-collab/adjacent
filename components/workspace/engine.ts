@@ -31,6 +31,8 @@ function save(col, obj){
   const patch = col === "cands" ? { status:obj.status, test:obj.test ?? null, iv:obj.iv || {}, d90:obj.d90 ?? null } : { hard:obj.hard, open:obj.open !== false };
   pending++;
   api("/api/workspace/save", { kind: col === "cands" ? "candidate" : "opening", id:obj.id, patch })
+    // The server adds things of its own, such as the interview link once you ask to meet.
+    .then(r => { if (r && r.doc && r.doc.id) { D[col][r.doc.id] = r.doc; softRender(); } })
     .catch(e => { S.storeNote = "That change was not saved: " + e.message; })
     .finally(() => { pending--; if (S.storeNote) refresh(); });
 }
