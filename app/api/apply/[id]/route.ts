@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { crossSite, limited } from "@/lib/rate-limit";
-import { createAnswer, getOpening, publicOpening } from "@/lib/workspace";
+import { MIN_WORDS, createAnswer, getOpening, publicOpening, words } from "@/lib/workspace";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,8 +33,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return bad("Invalid request.");
   }
   if (clip(body.website, 200)) return NextResponse.json({ ok: true }); // honeypot
+  // One answer per activity, each with a minimum, or marked as something they have never done.
+  let parts: Record<string, string> = {};
+  let skip: string[] = [];
+  try {
+    const pj = JSON.parse(clip(body.parts, 20000) || "{}");
+    if (pj && typeof pj === "object") for (const [k, v] of Object.entries(pj)) parts[String(k).slice(0, 40)] = clip(v, 3000);
+    const sj = JSON.parse(clip(body.skip, 2000) || "[]");
+    if (Array.isArray(sj)) skip = sj.map((x) => String(x).slice(0, 40));
+  } catch {
+    return bad("Invalid request.");
+  }
   const text = clip(body.text, 3000);
-  if (text.split(/\s+/).length < 15) return bad("Write at least a couple of sentences about what you did on a normal day.");
+  const byPart = Object.keys(parts).length > 0 || skip.length > 0;
+  if (!byPart && words(text) < 15) return bad("Write at least a couple of sentences about what you did on a normal day.");
   const email = clip(body.email, 200).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return bad("Add an email address so the employer can reach you if they want to meet.");
   if (body.consent !== "true") return bad("Tick the box so the employer is allowed to read your answer.");
@@ -56,7 +68,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const o = await getOpening((await params).id.slice(0, 40));
     if (!o) return bad("This opening does not exist.", 404);
     if (o.open === false) return bad("This opening has been filled.", 409);
-    const candidate = await createAnswer(o, { text, zone: clip(body.zone, 80), pay: clip(body.pay, 80), avail: clip(body.avail, 80), email, cv });
+    if (byPart) {
+      const short = o.activities.filter((a) => !skip.includes(a.id) && words(parts[a.id] || "") < MIN_WORDS);
+      if (short.length) return bad(`Write at least ${MIN_WORDS} words about: ${short.map((a) => a.name).join("; ")}. If you have never done one of these, tick the box under it instead.`);
+      if (skip.length === o.activities.length) return bad("You marked every activity as something you have never done. Describe at least one of them so there is something to compare.");
+    }
+    const candidate = await createAnswer(o, { parts, skip, text, zone: clip(body.zone, 80), pay: clip(body.pay, 80), avail: clip(body.avail, 80), email, cv });
     return NextResponse.json({ candidate });
   } catch (err) {
     console.error(err);

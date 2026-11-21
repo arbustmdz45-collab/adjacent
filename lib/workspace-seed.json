@@ -1,1 +1,968 @@
-{"openings": [{"id": "e2", "company": "Mid-sized insurer with offices on Reforma, Mexico City", "raw": "Auto claims service executive. Takes calls from policyholders after a crash, files the report, coordinates the adjuster and the tow truck, follows up until payment. Lots of angry customers. We require a university degree and insurance experience. High turnover, we always have 2 or 3 openings.", "pay": "MXN 14,000 gross per month", "hours": "Rotating 8-hour shifts, 5 days a week", "zone": "Paseo de la Reforma, Cuauhtémoc", "title": "Auto claims service executive", "activities": [{"id": "c1", "name": "Take a crash report by phone", "detail": "The policyholder calls right after the accident. Exact facts (location, vehicles, injuries, third parties) have to be drawn out of someone who is shaken, and recorded properly so the rest of the process works."}, {"id": "c2", "name": "Hold calls with angry or frightened people", "detail": "Many policyholders call upset. The task is to stay calm, be clear about what comes next and keep control of the conversation, call after call."}, {"id": "c3", "name": "Coordinate adjuster and tow truck in real time", "detail": "Assign the people in the field, confirm arrival times and keep the policyholder, who is waiting on the street, informed of where each one is."}, {"id": "c4", "name": "Follow several open files until payment", "detail": "Each case has its own status, pending documents and notices to the customer. With several cases at once, you have to know what is missing in each and who has it, until it is paid."}], "hard": {"aid": "c2", "text": "Your ad says there are lots of angry customers and high turnover. Activity 02 is where you lose people, so the fields below were chosen around it."}, "requirements": [{"text": "University degree", "verdict": "ask", "note": "None of the four activities needs it. If it is company policy it stays, but it shuts out almost everyone who works in emergency dispatch."}, {"text": "Insurance experience", "verdict": "learn", "note": "Coverage, deductibles and the claims file can be taught in the first weeks. Holding the call can't be taught that fast."}], "fields": [{"name": "Emergency dispatch (911 / C5)", "strength": 2, "same": "They answer calls from people in crisis, get the location and the facts with ordered questions, send units and track their arrival.", "teach": "Coverage and deductibles, and following a file for weeks. In dispatch every case closes in minutes.", "find": "Current and former operators at emergency call centres. Many want to get off night shifts, so the schedule matters as much as the pay.", "covers": {"c1": 2, "c2": 2, "c3": 2, "c4": 0}}, {"name": "Airline and airport passenger service", "strength": 1, "same": "They deal with upset passengers when a flight is cancelled, rebook them by coordinating with ground staff, and follow the compensation claim until it is paid.", "teach": "Taking a report by phone about something that just happened, with exact facts. Their work is almost all face to face.", "find": "Counter and passenger service staff at the airport, especially those who want a job without 4 a.m. starts.", "covers": {"c1": 0, "c2": 2, "c3": 1, "c4": 2}}, {"name": "Telecom customer service", "strength": 0, "same": "They take calls from upset customers and explain the steps of their case.", "teach": "Nearly everything else: coordinating people in the field, taking a report and carrying a case for weeks. Worth it only if they pass the practical test.", "find": "Phone and internet contact centres. Plenty of people are available, which is why it pays to filter with the test before interviewing.", "covers": {"c1": 0, "c2": 2, "c3": 0, "c4": 0}}], "ad": {"headline": "When someone crashes, yours is the first voice that helps", "body": "When someone crashes, the first call is to us. They are nervous, sometimes angry, and they need someone to ask the right questions and tell them what happens next. That someone would be you.\n\nYour job is to take those calls, file the report with the facts that matter (where they are, who is hurt, which vehicles are involved), send the adjuster and the tow truck, and tell the policyholder when they will arrive. After that you don't let go of the case: you carry it through documents, calls and updates until it is paid.\n\nYou will have several cases open at once, so you need order to know what comes next in each, and patience to explain the same thing clearly again.\n\nIf you have worked in emergency dispatch, in passenger service when a flight is cancelled, or in any job where you coordinate people on the move while someone needs you right now, this will feel familiar. You do not need insurance experience.\n\nOffice: [LOCATION]. Hours: [HOURS]. Pay: [PAY]."}, "test": {"title": "Simulated crash call", "setup": "Someone on your team plays a policyholder who has just crashed on the Periférico. They are shaken and give the information out of order. The candidate takes the call with no script.", "steps": ["Give them two minutes to read what the report needs: location, injuries, vehicles and third parties.", "Run the call for eight minutes. The caller interrupts, gets angry once and changes one fact halfway through.", "Ask them to tell you, in one minute, what they recorded and what they would tell the policyholder happens next.", "Compare what they recorded against what the caller said."], "good": "Asks about injuries and location first, confirms the fact that changed, does not argue when shouted at, and closes by saying what will happen and how soon.", "criteria": ["Asked about injuries and location before anything else", "Caught and confirmed the fact that changed", "Did not argue when shouted at", "Closed by saying what happens next and how soon"]}, "questions": [{"aid": "c1", "q": "Tell me about a time you had to get precise information from someone who was very upset or frightened. What did you ask, in what order, and what did you do when they couldn't answer?", "listen": "A real, specific situation. Questions ordered from most urgent to secondary, tone adjusted to the person, key facts verified and a complete record. If they only talk about \"being empathetic\" without saying what facts they got, it is a weak answer."}, {"aid": "c2", "q": "Think of a time a customer shouted at you or was very angry about something that was not your fault. What did you say and how did the conversation end?", "listen": "They did not get defensive or argue, they acknowledged the problem, explained what they could do and closed with a clear next step. A plus if they admit what did not go well."}, {"aid": "c3", "q": "Tell me about a moment when you had to coordinate several people in different places to solve something urgent. How did you know where each one was, and what did you do when someone was late?", "listen": "How they tracked it (calls, messages, a log), how they kept the person waiting informed, and what they changed when something failed. Examples from any field count if there are people on the move and a time limit."}, {"aid": "c4", "q": "Describe a period when you had several cases or tasks open at once, each at a different stage. How did you stop any of them being forgotten before it closed?", "listen": "A concrete method (list, spreadsheet, system, daily review), how they prioritised, how they notified the people affected, and one case that nearly got stuck and how they caught it."}], "example": true, "open": true, "created": 1793600000000}, {"id": "e12", "company": "Mid-sized private hospital in Nápoles, Mexico City", "raw": "Admissions and billing assistant. Registers patients, verifies medical insurance policies, puts together the patient account and the invoice, answers relatives' questions at discharge. Experience in hospitals or insurers.", "pay": "MXN 11,500 gross per month", "hours": "Morning shift, 7 to 3, every other Saturday", "zone": "Colonia Nápoles, Benito Juárez", "title": "Hospital admissions and billing assistant", "activities": [{"id": "c1", "name": "Register each arriving patient with their details and documents", "detail": "Capture ID, contact details and insurance details from people arriving because of a health situation, sometimes rushed or distressed, without errors that complicate the account later."}, {"id": "c2", "name": "Verify with the insurer what the policy covers", "detail": "Check each patient's policy, confirm it is in force and its conditions, and make clear what the insurer pays and what the patient pays."}, {"id": "c3", "name": "Put together the patient account and issue the invoice", "detail": "Gather the charges of the stay from different areas of the hospital, order them into an itemised account and issue the invoice with the right details."}, {"id": "c4", "name": "Answer relatives' questions at discharge", "detail": "Explain face to face what is being charged, what the insurance covers and what is left to pay, at a moment when relatives are tired or worried."}], "hard": {"aid": "c4", "text": "Your ad does not say why the opening is still unfilled. adjacent assumes the hardest part to cover is activity 04, explaining a bill face to face to a worried family. If that is wrong, correct it and the fields change."}, "requirements": [{"text": "Experience in hospitals or insurers", "verdict": "learn", "note": "Medical terms and insurer paperwork can be taught. Registering without errors, closing an account with many charges and explaining it calmly is something people in other fields already do."}], "fields": [{"name": "Hotel front desk", "strength": 2, "same": "They register guests with ID and payment details, keep the folio with the charges of the whole stay and close the account at check-out, explaining each item.", "teach": "Medical insurance policies and dealing with the insurer. In a hotel they only verify a card, not a coverage.", "find": "Receptionists and night auditors at hotels. A fixed morning shift is a strong argument against hotel rotas.", "covers": {"c1": 2, "c2": 1, "c3": 2, "c4": 2}}, {"name": "Car rental counter", "strength": 1, "same": "They check the licence and the customer's insurance coverage, explain deductibles and work out the final bill with extra charges.", "teach": "Medical policies, accounts with many more charges, and dealing with people in a health situation.", "find": "Counter staff at car rental companies, mainly at the airport and in office districts.", "covers": {"c1": 1, "c2": 1, "c3": 1, "c4": 1}}, {"name": "Billing at an accounting or services firm", "strength": 1, "same": "They build invoices from itemised charges, with correct tax details, and clear up differences with customers.", "teach": "All the face-to-face part. Useful if you split the role and need someone strong only on account and invoice.", "find": "Billing assistants at accounting and services firms.", "covers": {"c1": 0, "c2": 0, "c3": 2, "c4": 0}}], "ad": {"headline": "Welcome patients and families, and make the bill clear", "body": "We are looking for someone to receive people at a delicate moment and make sure the paperwork does not make their day harder. The job is to register each patient with their details and documents, check with the insurer that the medical policy is in force and what it covers, and gather all the charges of the stay into a clear account and its invoice. At discharge you will see relatives who arrive in a hurry or with doubts about what is being charged and what the insurance pays, and you will explain the account calmly.\n\nIf you work today at a hotel, a car rental counter, a firm that invoices, or anywhere you verify details, close accounts with many items and explain a charge to someone who is not happy, you probably already do most of this. You do not need to have worked in a hospital or an insurer; the processes and the medical terms can be learned.\n\nLocation: [LOCATION]. Hours: [HOURS]. Pay: [PAY]."}, "test": {"title": "Close an account and explain it", "setup": "Hand over a sheet with twelve charges from a two-day stay, coming from three areas, and a one-paragraph policy summary with a deductible and co-insurance. Everything is made up and needs no medical vocabulary.", "steps": ["Give them ten minutes to build the account and separate what the insurer pays from what the family pays.", "One of the twelve charges is duplicated. Do not mention it.", "Someone on your team plays a tired relative and asks why they have to pay anything if they have insurance.", "Ask the candidate to explain it in three minutes, face to face."], "good": "Finds the duplicated charge before adding up, explains deductible and co-insurance in plain words, and does not get defensive when the relative gets upset.", "criteria": ["Found the duplicated charge before adding up", "Split the insurer and family amounts correctly", "Explained deductible and co-insurance in plain words", "Stayed calm when the relative got upset"]}, "questions": [{"aid": "c1", "q": "Tell me about a time you had to register or capture the details of many people arriving in a hurry. What did you do to avoid mistakes?", "listen": "A specific situation with a real volume of people. How they checked details or documents, how they caught an error before it caused trouble, and what they did when something was missing."}, {"aid": "c2", "q": "Think of a time you had to confirm with a third party, such as an insurer, a bank or a supplier, that someone was entitled to something before giving them the service. How did you verify it, and what happened when the answer was not clear?", "listen": "Concrete verification steps, who they contacted and what documents they asked for. How they handled a doubtful or negative answer and how they told the person affected."}, {"aid": "c3", "q": "Describe an account or invoice you built from charges coming from several sources or areas. How did you make sure it added up, and what did you do when you found a difference?", "listen": "How they gathered and compared the charges, what they checked before issuing, and a real discrepancy. Who they asked, how they fixed it and what changed afterwards."}, {"aid": "c4", "q": "Tell me about a moment when someone got upset or confused about a charge you had to explain. What did you say and how did it end?", "listen": "A specific conversation, not a general description. Explained the charge item by item, listened before answering, stayed calm and knew when to ask someone else for help. Admits what they could not solve."}], "example": true, "open": true, "created": 1793600000000}, {"id": "e1", "company": "40-person accounting firm in Del Valle, Mexico City", "raw": "We are looking for an accounting assistant. Entering journal entries, bank reconciliations, support with monthly tax returns, use of CONTPAQi. Accounting degree, finished or unfinished, 1 year of experience at an accounting firm. 9 to 6, on site. The opening has been unfilled for 2 months, the people who come can't take month-end close.", "pay": "MXN 12,000 gross per month", "hours": "Monday to Friday, 9 to 6, on site", "zone": "Colonia Del Valle, Benito Juárez", "title": "Junior accounting assistant", "activities": [{"id": "c1", "name": "Enter journal entries for several clients without imbalances", "detail": "The volume is monthly and comes from different clients of the firm. A debit without its credit or a misfiled document carries through to the close and the tax return."}, {"id": "c2", "name": "Reconcile the bank against the books", "detail": "Item by item until the bank balance and the book balance match, or until it is documented why they do not."}, {"id": "c3", "name": "Gather the information for monthly tax returns", "detail": "Filing dates are fixed and do not depend on the firm, so the information has to be complete and correct before that date."}, {"id": "c4", "name": "Stay accurate during the days of month-end close", "detail": "This is where candidates leave today: many entries, reconciliations and loose ends from several clients at once, with a deadline that is not negotiable."}, {"id": "c5", "name": "Operate CONTPAQi", "detail": "The system is the tool for everything above. What is asked is handling it, not experience in a particular industry."}], "hard": {"aid": "c4", "text": "Your ad says the people who come can't take month-end close. That is why activity 04 weighs more than the degree or the software in choosing the fields."}, "requirements": [{"text": "Accounting degree, finished or unfinished", "verdict": "ask", "note": "It helps with accounting logic, but says nothing about getting through the close, which is where you lose people."}, {"text": "1 year of experience at an accounting firm", "verdict": "learn", "note": "Someone who has worked with daily cut-offs and balancing brings the habit you need, even if not from a firm."}, {"text": "Use of CONTPAQi", "verdict": "learn", "note": "It is a tool. It is learned in weeks if the person already enters and checks data in another system."}, {"text": "On site, 9 to 6", "verdict": "keep", "note": "Stays, and goes in the first paragraph of the ad."}], "fields": [{"name": "Bank branch operations and back office", "strength": 2, "same": "They balance the cash and the day's transactions against the system and hunt for the difference when they do not match, with a daily cut-off that does not move.", "teach": "Debit and credit logic, taxes and CONTPAQi.", "find": "Head tellers and back-office staff at bank branches.", "covers": {"c1": 1, "c2": 2, "c3": 0, "c4": 2, "c5": 0}}, {"name": "Warehouse and inventory control", "strength": 1, "same": "They enter goods in and out in a system and check physical stock against the records at period end.", "teach": "Bank reconciliation, taxes and CONTPAQi.", "find": "Inventory assistants at distribution centres and large retailers.", "covers": {"c1": 2, "c2": 1, "c3": 0, "c4": 1, "c5": 0}}, {"name": "School records and administration", "strength": 0, "same": "They enter large volumes of data with period deadlines and correct errors before they are published.", "teach": "The whole of accounting logic. It is the most distant field, worth it only if they pass the practical test.", "find": "Records and administration staff at private schools.", "covers": {"c1": 2, "c2": 0, "c3": 0, "c4": 1, "c5": 0}}], "ad": {"headline": "Accounting assistant: keep several clients' numbers in order, month after month", "body": "At an accounting firm of about 40 people in Del Valle we are looking for someone who enjoys leaving the numbers in order. The job is on site, 9 to 6. During the month you will enter journal entries in CONTPAQi for different clients and check that every debit has its credit. You will take the bank statements, compare them with the books and trace each difference, item by item, until it balances. You will also prepare the information the team needs for the monthly tax returns, with dates that do not move.\n\nMonth-end close is the most intense part: a lot of work lands in a few days and accuracy has to hold. We are telling you now, and that is why we want people who have already worked with closes, cut-offs or balancing, whether they come from a bank, a warehouse, a shop or an office. CONTPAQi can be learned; the patience to find a difference of a few pesos, not so easily.\n\nIf you studied accounting or left it halfway, we are interested too. Location: [LOCATION]. Hours: [HOURS]. Pay: [PAY]."}, "test": {"title": "Find the difference", "setup": "Hand over two sheets with twenty transactions each: a bank statement and the internal record for the same month. The closing balances differ by a small amount. No accounting knowledge is needed.", "steps": ["Three differences are planted: one missing transaction, one duplicate and one with two digits swapped.", "Give them twenty minutes and say when ten have passed.", "Ask them to mark each difference and write in one line where it comes from.", "Ask what they would do if one difference was left that they could not explain."], "good": "Works in order instead of checking at random, finds the swapped digits, and if something does not balance writes it down instead of forcing the total.", "criteria": ["Worked through the sheets in order", "Found the swapped digits", "Found the missing and the duplicate transaction", "Wrote down what did not balance instead of forcing it"]}, "questions": [{"aid": "c1", "q": "Tell me about a time you had to enter a lot of data or documents into a system and it had to be exact. What was the volume, how did you check your work, and what happened when you found an error?", "listen": "A concrete volume, a method of their own for checking (not just \"I was careful\"), a real error they caught and how they fixed it, and what changed afterwards."}, {"aid": "c2", "q": "Describe a case where two records that should match (tills, stock, balances, lists) did not. How did you find where the difference came from?", "listen": "An ordered way of tracing (narrowing by date, amount, item), the real cause they found, and what they did when part of the difference could not be explained."}, {"aid": "c3", "q": "Tell me about a time you had to hand complete information to someone else before a deadline you could not move. What was missing and how did you get it?", "listen": "A real external deadline, how they spotted what was missing in time, how they asked others for it and what they decided when something did not arrive."}, {"aid": "c4", "q": "Think of the heaviest period you have had at work, with a lot concentrated in a few days. How did you organise your time and avoid mistakes from rushing?", "listen": "A specific example with days and quantities, an order of priorities they can explain, a way of still checking under pressure, and honesty about what was hard or went wrong."}, {"aid": "c5", "q": "Tell me about a system you had to learn on the job. How long did it take before you could work without asking, and how did you learn it?", "listen": "A named system, a rough time, and a method: notes, practice on real cases, asking a specific person. Vague confidence without an example is a weak answer."}], "example": true, "open": true, "created": 1793600000000}], "cands": [{"code": "A-014", "fi": 0, "from": "emergency dispatch, 4 years", "zone": "Iztacalco", "salary": "MXN 15,000 a month", "avail": "available in 2 weeks", "said": "I worked four years as an operator at an emergency call centre. I answered calls from people in accidents or robberies, nearly always shouting or crying. I had to get the exact location and whether anyone was hurt before anything else, and type it in while they talked. Then I passed it to the patrol car or ambulance and stayed on the line until they arrived. In one shift I took between 60 and 80 calls.", "gap": "Insurance from scratch, and following a file through to payment.", "evidence": [{"aid": "c1", "level": 2, "quote": "I had to get the exact location and whether anyone was hurt before anything else, and type it in while they talked", "note": "The same fact-taking, under more pressure."}, {"aid": "c2", "level": 2, "quote": "I answered calls from people in accidents or robberies, nearly always shouting or crying", "note": "Between 60 and 80 calls a shift, as written."}, {"aid": "c3", "level": 2, "quote": "I passed it to the patrol car or ambulance and stayed on the line until they arrived", "note": "Sends units and stays with the person waiting."}, {"aid": "c4", "level": 0, "quote": "", "note": "Wrote nothing about carrying open cases for days or weeks."}], "id": "a014", "oid": "e2", "status": "new", "example": true, "created": 1794300000000}, {"code": "B-022", "fi": 1, "from": "airline counter, 3 years", "zone": "Venustiano Carranza", "salary": "MXN 13,500 a month", "avail": "available now", "said": "I spent three years at the counter and gate of an airline at the airport. When a flight was cancelled I had to deal with the line of upset passengers, explain their options and rebook them on other flights. I coordinated by radio with the ramp and with baggage so the bags went on the new flight. I followed the compensation claims myself until they were paid, sometimes it took three weeks.", "gap": "The first call after the crash. Give them the simulated call test.", "evidence": [{"aid": "c1", "level": 0, "quote": "", "note": "Wrote nothing about taking a report by phone."}, {"aid": "c2", "level": 2, "quote": "I had to deal with the line of upset passengers, explain their options and rebook them on other flights", "note": "Face to face and with a queue, not by phone."}, {"aid": "c3", "level": 1, "quote": "I coordinated by radio with the ramp and with baggage", "note": "Coordinates teams on the move, though inside the airport and not on the street."}, {"aid": "c4", "level": 2, "quote": "I followed the compensation claims myself until they were paid, sometimes it took three weeks", "note": "Long follow-up to a payment, like the claims file."}], "id": "b022", "oid": "e2", "status": "new", "example": true, "created": 1794300000000}, {"code": "H-007", "fi": 0, "from": "hotel front desk, 5 years", "zone": "Benito Juárez", "salary": "MXN 12,000 a month", "avail": "available in 2 weeks", "said": "I have spent five years at the front desk of a business hotel. I check guests in with their ID and card, and I make sure the invoicing details are right from arrival. During the stay I post the restaurant, laundry and parking to the folio. At check-out I go through the whole folio with the guest and almost every day someone disputes a charge, so I explain it item by item and if I got it wrong I fix it on the spot.", "gap": "Medical insurance policies and the paperwork with the insurer.", "evidence": [{"aid": "c1", "level": 2, "quote": "I check guests in with their ID and card, and I make sure the invoicing details are right from arrival", "note": "The same registration, without the health part."}, {"aid": "c2", "level": 0, "quote": "", "note": "Wrote nothing about verifying a coverage with a third party."}, {"aid": "c3", "level": 2, "quote": "I post the restaurant, laundry and parking to the folio", "note": "An account with charges from several areas, like the patient's."}, {"aid": "c4", "level": 2, "quote": "almost every day someone disputes a charge, so I explain it item by item", "note": "Explains charges face to face every day."}], "id": "h007", "oid": "e12", "status": "new", "example": true, "created": 1794300000000}, {"code": "H-019", "fi": 2, "from": "billing at a firm, 2 years", "zone": "Coyoacán", "salary": "MXN 11,000 a month", "avail": "available now", "said": "I have worked for two years at a firm doing the client invoices. I receive the hours and expenses for each project, put them together in a statement and issue the invoice with the client's tax details. When a client disagrees with an amount they email me and I send them the breakdown.", "gap": "All the in-person service. The explain-the-account test would show if they can handle it.", "evidence": [{"aid": "c1", "level": 0, "quote": "", "note": "Wrote nothing about registering people on arrival."}, {"aid": "c2", "level": 0, "quote": "", "note": "Wrote nothing about verifying coverage."}, {"aid": "c3", "level": 2, "quote": "I receive the hours and expenses for each project, put them together in a statement and issue the invoice with the client's tax details", "note": "Builds the account and invoices."}, {"aid": "c4", "level": 1, "quote": "When a client disagrees with an amount they email me and I send them the breakdown", "note": "Clears up charges, but by email and not face to face."}], "id": "h019", "oid": "e12", "status": "new", "example": true, "created": 1794300000000}, {"code": "C-003", "fi": 0, "from": "head teller at a bank branch, 6 years", "zone": "Gustavo A. Madero", "salary": "MXN 12,500 a month", "avail": "available in 3 weeks", "said": "I was head teller at a branch for six years. At the end of each day I balanced the cash from all the tills against what the system said, and if we were over or short even by ten pesos we could not leave until we found which transaction had the error. On paydays there were three times as many transactions and the cut-off was at the same hour. I also entered deposits from companies with many slips.", "gap": "Accounting logic, tax returns and CONTPAQi.", "evidence": [{"aid": "c1", "level": 1, "quote": "I also entered deposits from companies with many slips", "note": "Data entry with volume, but not journal entries."}, {"aid": "c2", "level": 2, "quote": "we could not leave until we found which transaction had the error", "note": "Traces differences to their source every day."}, {"aid": "c3", "level": 0, "quote": "", "note": "Wrote nothing about preparing information for taxes."}, {"aid": "c4", "level": 2, "quote": "On paydays there were three times as many transactions and the cut-off was at the same hour", "note": "Peaks of work with a fixed hour, like the close."}, {"aid": "c5", "level": 0, "quote": "", "note": "Does not mention CONTPAQi."}], "id": "c003", "oid": "e1", "status": "new", "example": true, "created": 1794300000000}, {"code": "C-011", "fi": 1, "from": "inventory at a distribution centre, 3 years", "zone": "Azcapotzalco", "salary": "MXN 11,500 a month", "avail": "available now", "said": "I have three years as an inventory assistant. I enter every goods-in and goods-out of the warehouse in the system, about 300 movements a day. At each month end we do a physical count and I have to compare what was counted with what the system says and check the differences one by one.", "gap": "Bank reconciliation, taxes and CONTPAQi. The find-the-difference test would tell a lot.", "evidence": [{"aid": "c1", "level": 2, "quote": "I enter every goods-in and goods-out of the warehouse in the system, about 300 movements a day", "note": "Daily entry at high volume."}, {"aid": "c2", "level": 1, "quote": "compare what was counted with what the system says and check the differences one by one", "note": "Reconciles stock, not a bank."}, {"aid": "c3", "level": 0, "quote": "", "note": "Wrote nothing about taxes or returns."}, {"aid": "c4", "level": 1, "quote": "At each month end we do a physical count", "note": "Has a monthly close, but does not say how it goes under pressure."}, {"aid": "c5", "level": 0, "quote": "", "note": "Does not mention CONTPAQi."}], "id": "c011", "oid": "e1", "status": "new", "example": true, "created": 1794300000000}]}
+{
+ "openings": [
+  {
+   "id": "e2",
+   "company": "Mid-sized insurer with offices on Reforma, Mexico City",
+   "raw": "Auto claims service executive. Takes calls from policyholders after a crash, files the report, coordinates the adjuster and the tow truck, follows up until payment. Lots of angry customers. We require a university degree and insurance experience. High turnover, we always have 2 or 3 openings.",
+   "pay": "MXN 14,000 gross per month",
+   "hours": "Rotating 8-hour shifts, 5 days a week",
+   "zone": "Paseo de la Reforma, Cuauhtémoc",
+   "title": "Auto claims service executive",
+   "activities": [
+    {
+     "id": "c1",
+     "name": "Take a crash report by phone",
+     "detail": "The policyholder calls right after the accident. Exact facts (location, vehicles, injuries, third parties) have to be drawn out of someone who is shaken, and recorded properly so the rest of the process works."
+    },
+    {
+     "id": "c2",
+     "name": "Hold calls with angry or frightened people",
+     "detail": "Many policyholders call upset. The task is to stay calm, be clear about what comes next and keep control of the conversation, call after call."
+    },
+    {
+     "id": "c3",
+     "name": "Coordinate adjuster and tow truck in real time",
+     "detail": "Assign the people in the field, confirm arrival times and keep the policyholder, who is waiting on the street, informed of where each one is."
+    },
+    {
+     "id": "c4",
+     "name": "Follow several open files until payment",
+     "detail": "Each case has its own status, pending documents and notices to the customer. With several cases at once, you have to know what is missing in each and who has it, until it is paid."
+    }
+   ],
+   "hard": {
+    "aid": "c2",
+    "text": "Your ad says there are lots of angry customers and high turnover. Activity 02 is where you lose people, so the fields below were chosen around it."
+   },
+   "requirements": [
+    {
+     "text": "University degree",
+     "verdict": "ask",
+     "note": "None of the four activities needs it. If it is company policy it stays, but it shuts out almost everyone who works in emergency dispatch."
+    },
+    {
+     "text": "Insurance experience",
+     "verdict": "learn",
+     "note": "Coverage, deductibles and the claims file can be taught in the first weeks. Holding the call can't be taught that fast."
+    }
+   ],
+   "fields": [
+    {
+     "name": "Emergency dispatch (911 / C5)",
+     "strength": 2,
+     "same": "They answer calls from people in crisis, get the location and the facts with ordered questions, send units and track their arrival.",
+     "teach": "Coverage and deductibles, and following a file for weeks. In dispatch every case closes in minutes.",
+     "find": "Current and former operators at emergency call centres. Many want to get off night shifts, so the schedule matters as much as the pay.",
+     "covers": {
+      "c1": 2,
+      "c2": 2,
+      "c3": 2,
+      "c4": 0
+     }
+    },
+    {
+     "name": "Airline and airport passenger service",
+     "strength": 1,
+     "same": "They deal with upset passengers when a flight is cancelled, rebook them by coordinating with ground staff, and follow the compensation claim until it is paid.",
+     "teach": "Taking a report by phone about something that just happened, with exact facts. Their work is almost all face to face.",
+     "find": "Counter and passenger service staff at the airport, especially those who want a job without 4 a.m. starts.",
+     "covers": {
+      "c1": 0,
+      "c2": 2,
+      "c3": 1,
+      "c4": 2
+     }
+    },
+    {
+     "name": "Telecom customer service",
+     "strength": 0,
+     "same": "They take calls from upset customers and explain the steps of their case.",
+     "teach": "Nearly everything else: coordinating people in the field, taking a report and carrying a case for weeks. Worth it only if they pass the practical test.",
+     "find": "Phone and internet contact centres. Plenty of people are available, which is why it pays to filter with the test before interviewing.",
+     "covers": {
+      "c1": 0,
+      "c2": 2,
+      "c3": 0,
+      "c4": 0
+     }
+    }
+   ],
+   "ad": {
+    "headline": "When someone crashes, yours is the first voice that helps",
+    "body": "When someone crashes, the first call is to us. They are nervous, sometimes angry, and they need someone to ask the right questions and tell them what happens next. That someone would be you.\n\nYour job is to take those calls, file the report with the facts that matter (where they are, who is hurt, which vehicles are involved), send the adjuster and the tow truck, and tell the policyholder when they will arrive. After that you don't let go of the case: you carry it through documents, calls and updates until it is paid.\n\nYou will have several cases open at once, so you need order to know what comes next in each, and patience to explain the same thing clearly again.\n\nIf you have worked in emergency dispatch, in passenger service when a flight is cancelled, or in any job where you coordinate people on the move while someone needs you right now, this will feel familiar. You do not need insurance experience.\n\nOffice: [LOCATION]. Hours: [HOURS]. Pay: [PAY]."
+   },
+   "test": {
+    "title": "Simulated crash call",
+    "setup": "Someone on your team plays a policyholder who has just crashed on the Periférico. They are shaken and give the information out of order. The candidate takes the call with no script.",
+    "steps": [
+     "Give them two minutes to read what the report needs: location, injuries, vehicles and third parties.",
+     "Run the call for eight minutes. The caller interrupts, gets angry once and changes one fact halfway through.",
+     "Ask them to tell you, in one minute, what they recorded and what they would tell the policyholder happens next.",
+     "Compare what they recorded against what the caller said."
+    ],
+    "good": "Asks about injuries and location first, confirms the fact that changed, does not argue when shouted at, and closes by saying what will happen and how soon.",
+    "criteria": [
+     "Asked about injuries and location before anything else",
+     "Caught and confirmed the fact that changed",
+     "Did not argue when shouted at",
+     "Closed by saying what happens next and how soon"
+    ]
+   },
+   "questions": [
+    {
+     "aid": "c1",
+     "q": "Tell me about a time you had to get precise information from someone who was very upset or frightened. What did you ask, in what order, and what did you do when they couldn't answer?",
+     "listen": "A real, specific situation. Questions ordered from most urgent to secondary, tone adjusted to the person, key facts verified and a complete record. If they only talk about \"being empathetic\" without saying what facts they got, it is a weak answer."
+    },
+    {
+     "aid": "c2",
+     "q": "Think of a time a customer shouted at you or was very angry about something that was not your fault. What did you say and how did the conversation end?",
+     "listen": "They did not get defensive or argue, they acknowledged the problem, explained what they could do and closed with a clear next step. A plus if they admit what did not go well."
+    },
+    {
+     "aid": "c3",
+     "q": "Tell me about a moment when you had to coordinate several people in different places to solve something urgent. How did you know where each one was, and what did you do when someone was late?",
+     "listen": "How they tracked it (calls, messages, a log), how they kept the person waiting informed, and what they changed when something failed. Examples from any field count if there are people on the move and a time limit."
+    },
+    {
+     "aid": "c4",
+     "q": "Describe a period when you had several cases or tasks open at once, each at a different stage. How did you stop any of them being forgotten before it closed?",
+     "listen": "A concrete method (list, spreadsheet, system, daily review), how they prioritised, how they notified the people affected, and one case that nearly got stuck and how they caught it."
+    }
+   ],
+   "example": true,
+   "open": true,
+   "created": 1793600000000
+  },
+  {
+   "id": "e12",
+   "company": "Mid-sized private hospital in Nápoles, Mexico City",
+   "raw": "Admissions and billing assistant. Registers patients, verifies medical insurance policies, puts together the patient account and the invoice, answers relatives' questions at discharge. Experience in hospitals or insurers.",
+   "pay": "MXN 11,500 gross per month",
+   "hours": "Morning shift, 7 to 3, every other Saturday",
+   "zone": "Colonia Nápoles, Benito Juárez",
+   "title": "Hospital admissions and billing assistant",
+   "activities": [
+    {
+     "id": "c1",
+     "name": "Register each arriving patient with their details and documents",
+     "detail": "Capture ID, contact details and insurance details from people arriving because of a health situation, sometimes rushed or distressed, without errors that complicate the account later."
+    },
+    {
+     "id": "c2",
+     "name": "Verify with the insurer what the policy covers",
+     "detail": "Check each patient's policy, confirm it is in force and its conditions, and make clear what the insurer pays and what the patient pays."
+    },
+    {
+     "id": "c3",
+     "name": "Put together the patient account and issue the invoice",
+     "detail": "Gather the charges of the stay from different areas of the hospital, order them into an itemised account and issue the invoice with the right details."
+    },
+    {
+     "id": "c4",
+     "name": "Answer relatives' questions at discharge",
+     "detail": "Explain face to face what is being charged, what the insurance covers and what is left to pay, at a moment when relatives are tired or worried."
+    }
+   ],
+   "hard": {
+    "aid": "c4",
+    "text": "Your ad does not say why the opening is still unfilled. adjacent assumes the hardest part to cover is activity 04, explaining a bill face to face to a worried family. If that is wrong, correct it and the fields change."
+   },
+   "requirements": [
+    {
+     "text": "Experience in hospitals or insurers",
+     "verdict": "learn",
+     "note": "Medical terms and insurer paperwork can be taught. Registering without errors, closing an account with many charges and explaining it calmly is something people in other fields already do."
+    }
+   ],
+   "fields": [
+    {
+     "name": "Hotel front desk",
+     "strength": 2,
+     "same": "They register guests with ID and payment details, keep the folio with the charges of the whole stay and close the account at check-out, explaining each item.",
+     "teach": "Medical insurance policies and dealing with the insurer. In a hotel they only verify a card, not a coverage.",
+     "find": "Receptionists and night auditors at hotels. A fixed morning shift is a strong argument against hotel rotas.",
+     "covers": {
+      "c1": 2,
+      "c2": 1,
+      "c3": 2,
+      "c4": 2
+     }
+    },
+    {
+     "name": "Car rental counter",
+     "strength": 1,
+     "same": "They check the licence and the customer's insurance coverage, explain deductibles and work out the final bill with extra charges.",
+     "teach": "Medical policies, accounts with many more charges, and dealing with people in a health situation.",
+     "find": "Counter staff at car rental companies, mainly at the airport and in office districts.",
+     "covers": {
+      "c1": 1,
+      "c2": 1,
+      "c3": 1,
+      "c4": 1
+     }
+    },
+    {
+     "name": "Billing at an accounting or services firm",
+     "strength": 1,
+     "same": "They build invoices from itemised charges, with correct tax details, and clear up differences with customers.",
+     "teach": "All the face-to-face part. Useful if you split the role and need someone strong only on account and invoice.",
+     "find": "Billing assistants at accounting and services firms.",
+     "covers": {
+      "c1": 0,
+      "c2": 0,
+      "c3": 2,
+      "c4": 0
+     }
+    }
+   ],
+   "ad": {
+    "headline": "Welcome patients and families, and make the bill clear",
+    "body": "We are looking for someone to receive people at a delicate moment and make sure the paperwork does not make their day harder. The job is to register each patient with their details and documents, check with the insurer that the medical policy is in force and what it covers, and gather all the charges of the stay into a clear account and its invoice. At discharge you will see relatives who arrive in a hurry or with doubts about what is being charged and what the insurance pays, and you will explain the account calmly.\n\nIf you work today at a hotel, a car rental counter, a firm that invoices, or anywhere you verify details, close accounts with many items and explain a charge to someone who is not happy, you probably already do most of this. You do not need to have worked in a hospital or an insurer; the processes and the medical terms can be learned.\n\nLocation: [LOCATION]. Hours: [HOURS]. Pay: [PAY]."
+   },
+   "test": {
+    "title": "Close an account and explain it",
+    "setup": "Hand over a sheet with twelve charges from a two-day stay, coming from three areas, and a one-paragraph policy summary with a deductible and co-insurance. Everything is made up and needs no medical vocabulary.",
+    "steps": [
+     "Give them ten minutes to build the account and separate what the insurer pays from what the family pays.",
+     "One of the twelve charges is duplicated. Do not mention it.",
+     "Someone on your team plays a tired relative and asks why they have to pay anything if they have insurance.",
+     "Ask the candidate to explain it in three minutes, face to face."
+    ],
+    "good": "Finds the duplicated charge before adding up, explains deductible and co-insurance in plain words, and does not get defensive when the relative gets upset.",
+    "criteria": [
+     "Found the duplicated charge before adding up",
+     "Split the insurer and family amounts correctly",
+     "Explained deductible and co-insurance in plain words",
+     "Stayed calm when the relative got upset"
+    ]
+   },
+   "questions": [
+    {
+     "aid": "c1",
+     "q": "Tell me about a time you had to register or capture the details of many people arriving in a hurry. What did you do to avoid mistakes?",
+     "listen": "A specific situation with a real volume of people. How they checked details or documents, how they caught an error before it caused trouble, and what they did when something was missing."
+    },
+    {
+     "aid": "c2",
+     "q": "Think of a time you had to confirm with a third party, such as an insurer, a bank or a supplier, that someone was entitled to something before giving them the service. How did you verify it, and what happened when the answer was not clear?",
+     "listen": "Concrete verification steps, who they contacted and what documents they asked for. How they handled a doubtful or negative answer and how they told the person affected."
+    },
+    {
+     "aid": "c3",
+     "q": "Describe an account or invoice you built from charges coming from several sources or areas. How did you make sure it added up, and what did you do when you found a difference?",
+     "listen": "How they gathered and compared the charges, what they checked before issuing, and a real discrepancy. Who they asked, how they fixed it and what changed afterwards."
+    },
+    {
+     "aid": "c4",
+     "q": "Tell me about a moment when someone got upset or confused about a charge you had to explain. What did you say and how did it end?",
+     "listen": "A specific conversation, not a general description. Explained the charge item by item, listened before answering, stayed calm and knew when to ask someone else for help. Admits what they could not solve."
+    }
+   ],
+   "example": true,
+   "open": true,
+   "created": 1793600000000
+  },
+  {
+   "id": "e1",
+   "company": "40-person accounting firm in Del Valle, Mexico City",
+   "raw": "We are looking for an accounting assistant. Entering journal entries, bank reconciliations, support with monthly tax returns, use of CONTPAQi. Accounting degree, finished or unfinished, 1 year of experience at an accounting firm. 9 to 6, on site. The opening has been unfilled for 2 months, the people who come can't take month-end close.",
+   "pay": "MXN 12,000 gross per month",
+   "hours": "Monday to Friday, 9 to 6, on site",
+   "zone": "Colonia Del Valle, Benito Juárez",
+   "title": "Junior accounting assistant",
+   "activities": [
+    {
+     "id": "c1",
+     "name": "Enter journal entries for several clients without imbalances",
+     "detail": "The volume is monthly and comes from different clients of the firm. A debit without its credit or a misfiled document carries through to the close and the tax return."
+    },
+    {
+     "id": "c2",
+     "name": "Reconcile the bank against the books",
+     "detail": "Item by item until the bank balance and the book balance match, or until it is documented why they do not."
+    },
+    {
+     "id": "c3",
+     "name": "Gather the information for monthly tax returns",
+     "detail": "Filing dates are fixed and do not depend on the firm, so the information has to be complete and correct before that date."
+    },
+    {
+     "id": "c4",
+     "name": "Stay accurate during the days of month-end close",
+     "detail": "This is where candidates leave today: many entries, reconciliations and loose ends from several clients at once, with a deadline that is not negotiable."
+    },
+    {
+     "id": "c5",
+     "name": "Operate CONTPAQi",
+     "detail": "The system is the tool for everything above. What is asked is handling it, not experience in a particular industry."
+    }
+   ],
+   "hard": {
+    "aid": "c4",
+    "text": "Your ad says the people who come can't take month-end close. That is why activity 04 weighs more than the degree or the software in choosing the fields."
+   },
+   "requirements": [
+    {
+     "text": "Accounting degree, finished or unfinished",
+     "verdict": "ask",
+     "note": "It helps with accounting logic, but says nothing about getting through the close, which is where you lose people."
+    },
+    {
+     "text": "1 year of experience at an accounting firm",
+     "verdict": "learn",
+     "note": "Someone who has worked with daily cut-offs and balancing brings the habit you need, even if not from a firm."
+    },
+    {
+     "text": "Use of CONTPAQi",
+     "verdict": "learn",
+     "note": "It is a tool. It is learned in weeks if the person already enters and checks data in another system."
+    },
+    {
+     "text": "On site, 9 to 6",
+     "verdict": "keep",
+     "note": "Stays, and goes in the first paragraph of the ad."
+    }
+   ],
+   "fields": [
+    {
+     "name": "Bank branch operations and back office",
+     "strength": 2,
+     "same": "They balance the cash and the day's transactions against the system and hunt for the difference when they do not match, with a daily cut-off that does not move.",
+     "teach": "Debit and credit logic, taxes and CONTPAQi.",
+     "find": "Head tellers and back-office staff at bank branches.",
+     "covers": {
+      "c1": 1,
+      "c2": 2,
+      "c3": 0,
+      "c4": 2,
+      "c5": 0
+     }
+    },
+    {
+     "name": "Warehouse and inventory control",
+     "strength": 1,
+     "same": "They enter goods in and out in a system and check physical stock against the records at period end.",
+     "teach": "Bank reconciliation, taxes and CONTPAQi.",
+     "find": "Inventory assistants at distribution centres and large retailers.",
+     "covers": {
+      "c1": 2,
+      "c2": 1,
+      "c3": 0,
+      "c4": 1,
+      "c5": 0
+     }
+    },
+    {
+     "name": "School records and administration",
+     "strength": 0,
+     "same": "They enter large volumes of data with period deadlines and correct errors before they are published.",
+     "teach": "The whole of accounting logic. It is the most distant field, worth it only if they pass the practical test.",
+     "find": "Records and administration staff at private schools.",
+     "covers": {
+      "c1": 2,
+      "c2": 0,
+      "c3": 0,
+      "c4": 1,
+      "c5": 0
+     }
+    }
+   ],
+   "ad": {
+    "headline": "Accounting assistant: keep several clients' numbers in order, month after month",
+    "body": "At an accounting firm of about 40 people in Del Valle we are looking for someone who enjoys leaving the numbers in order. The job is on site, 9 to 6. During the month you will enter journal entries in CONTPAQi for different clients and check that every debit has its credit. You will take the bank statements, compare them with the books and trace each difference, item by item, until it balances. You will also prepare the information the team needs for the monthly tax returns, with dates that do not move.\n\nMonth-end close is the most intense part: a lot of work lands in a few days and accuracy has to hold. We are telling you now, and that is why we want people who have already worked with closes, cut-offs or balancing, whether they come from a bank, a warehouse, a shop or an office. CONTPAQi can be learned; the patience to find a difference of a few pesos, not so easily.\n\nIf you studied accounting or left it halfway, we are interested too. Location: [LOCATION]. Hours: [HOURS]. Pay: [PAY]."
+   },
+   "test": {
+    "title": "Find the difference",
+    "setup": "Hand over two sheets with twenty transactions each: a bank statement and the internal record for the same month. The closing balances differ by a small amount. No accounting knowledge is needed.",
+    "steps": [
+     "Three differences are planted: one missing transaction, one duplicate and one with two digits swapped.",
+     "Give them twenty minutes and say when ten have passed.",
+     "Ask them to mark each difference and write in one line where it comes from.",
+     "Ask what they would do if one difference was left that they could not explain."
+    ],
+    "good": "Works in order instead of checking at random, finds the swapped digits, and if something does not balance writes it down instead of forcing the total.",
+    "criteria": [
+     "Worked through the sheets in order",
+     "Found the swapped digits",
+     "Found the missing and the duplicate transaction",
+     "Wrote down what did not balance instead of forcing it"
+    ]
+   },
+   "questions": [
+    {
+     "aid": "c1",
+     "q": "Tell me about a time you had to enter a lot of data or documents into a system and it had to be exact. What was the volume, how did you check your work, and what happened when you found an error?",
+     "listen": "A concrete volume, a method of their own for checking (not just \"I was careful\"), a real error they caught and how they fixed it, and what changed afterwards."
+    },
+    {
+     "aid": "c2",
+     "q": "Describe a case where two records that should match (tills, stock, balances, lists) did not. How did you find where the difference came from?",
+     "listen": "An ordered way of tracing (narrowing by date, amount, item), the real cause they found, and what they did when part of the difference could not be explained."
+    },
+    {
+     "aid": "c3",
+     "q": "Tell me about a time you had to hand complete information to someone else before a deadline you could not move. What was missing and how did you get it?",
+     "listen": "A real external deadline, how they spotted what was missing in time, how they asked others for it and what they decided when something did not arrive."
+    },
+    {
+     "aid": "c4",
+     "q": "Think of the heaviest period you have had at work, with a lot concentrated in a few days. How did you organise your time and avoid mistakes from rushing?",
+     "listen": "A specific example with days and quantities, an order of priorities they can explain, a way of still checking under pressure, and honesty about what was hard or went wrong."
+    },
+    {
+     "aid": "c5",
+     "q": "Tell me about a system you had to learn on the job. How long did it take before you could work without asking, and how did you learn it?",
+     "listen": "A named system, a rough time, and a method: notes, practice on real cases, asking a specific person. Vague confidence without an example is a weak answer."
+    }
+   ],
+   "example": true,
+   "open": true,
+   "created": 1793600000000
+  }
+ ],
+ "cands": [
+  {
+   "code": "A-014",
+   "fi": 0,
+   "from": "emergency dispatch, 4 years",
+   "zone": "Iztacalco",
+   "salary": "MXN 15,000 a month",
+   "avail": "available in 2 weeks",
+   "said": "I worked four years as an operator at an emergency call centre. I answered calls from people in accidents or robberies, nearly always shouting or crying. I had to get the exact location and whether anyone was hurt before anything else, and type it in while they talked. Then I passed it to the patrol car or ambulance and stayed on the line until they arrived. In one shift I took between 60 and 80 calls.",
+   "gap": "Insurance from scratch, and following a file through to payment.",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 2,
+     "quote": "I had to get the exact location and whether anyone was hurt before anything else, and type it in while they talked",
+     "note": "The same fact-taking, under more pressure."
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "I answered calls from people in accidents or robberies, nearly always shouting or crying",
+     "note": "Between 60 and 80 calls a shift, as written."
+    },
+    {
+     "aid": "c3",
+     "level": 2,
+     "quote": "I passed it to the patrol car or ambulance and stayed on the line until they arrived",
+     "note": "Sends units and stays with the person waiting."
+    },
+    {
+     "aid": "c4",
+     "level": 0,
+     "quote": "",
+     "note": "Wrote nothing about carrying open cases for days or weeks."
+    }
+   ],
+   "id": "a014",
+   "oid": "e2",
+   "status": "new",
+   "example": true,
+   "created": 1794300000000
+  },
+  {
+   "code": "B-022",
+   "fi": 1,
+   "from": "airline counter, 3 years",
+   "zone": "Venustiano Carranza",
+   "salary": "MXN 13,500 a month",
+   "avail": "available now",
+   "said": "I spent three years at the counter and gate of an airline at the airport. When a flight was cancelled I had to deal with the line of upset passengers, explain their options and rebook them on other flights. I coordinated by radio with the ramp and with baggage so the bags went on the new flight. I followed the compensation claims myself until they were paid, sometimes it took three weeks.",
+   "gap": "The first call after the crash. Give them the simulated call test.",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 0,
+     "quote": "",
+     "note": "Wrote nothing about taking a report by phone."
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "I had to deal with the line of upset passengers, explain their options and rebook them on other flights",
+     "note": "Face to face and with a queue, not by phone."
+    },
+    {
+     "aid": "c3",
+     "level": 1,
+     "quote": "I coordinated by radio with the ramp and with baggage",
+     "note": "Coordinates teams on the move, though inside the airport and not on the street."
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "I followed the compensation claims myself until they were paid, sometimes it took three weeks",
+     "note": "Long follow-up to a payment, like the claims file."
+    }
+   ],
+   "id": "b022",
+   "oid": "e2",
+   "status": "new",
+   "example": true,
+   "created": 1794300000000
+  },
+  {
+   "code": "H-007",
+   "fi": 0,
+   "from": "hotel front desk, 5 years",
+   "zone": "Benito Juárez",
+   "salary": "MXN 12,000 a month",
+   "avail": "available in 2 weeks",
+   "said": "I have spent five years at the front desk of a business hotel. I check guests in with their ID and card, and I make sure the invoicing details are right from arrival. During the stay I post the restaurant, laundry and parking to the folio. At check-out I go through the whole folio with the guest and almost every day someone disputes a charge, so I explain it item by item and if I got it wrong I fix it on the spot.",
+   "gap": "Medical insurance policies and the paperwork with the insurer.",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 2,
+     "quote": "I check guests in with their ID and card, and I make sure the invoicing details are right from arrival",
+     "note": "The same registration, without the health part."
+    },
+    {
+     "aid": "c2",
+     "level": 0,
+     "quote": "",
+     "note": "Wrote nothing about verifying a coverage with a third party."
+    },
+    {
+     "aid": "c3",
+     "level": 2,
+     "quote": "I post the restaurant, laundry and parking to the folio",
+     "note": "An account with charges from several areas, like the patient's."
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "almost every day someone disputes a charge, so I explain it item by item",
+     "note": "Explains charges face to face every day."
+    }
+   ],
+   "id": "h007",
+   "oid": "e12",
+   "status": "new",
+   "example": true,
+   "created": 1794300000000
+  },
+  {
+   "code": "H-019",
+   "fi": 2,
+   "from": "billing at a firm, 2 years",
+   "zone": "Coyoacán",
+   "salary": "MXN 11,000 a month",
+   "avail": "available now",
+   "said": "I have worked for two years at a firm doing the client invoices. I receive the hours and expenses for each project, put them together in a statement and issue the invoice with the client's tax details. When a client disagrees with an amount they email me and I send them the breakdown.",
+   "gap": "All the in-person service. The explain-the-account test would show if they can handle it.",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 0,
+     "quote": "",
+     "note": "Wrote nothing about registering people on arrival."
+    },
+    {
+     "aid": "c2",
+     "level": 0,
+     "quote": "",
+     "note": "Wrote nothing about verifying coverage."
+    },
+    {
+     "aid": "c3",
+     "level": 2,
+     "quote": "I receive the hours and expenses for each project, put them together in a statement and issue the invoice with the client's tax details",
+     "note": "Builds the account and invoices."
+    },
+    {
+     "aid": "c4",
+     "level": 1,
+     "quote": "When a client disagrees with an amount they email me and I send them the breakdown",
+     "note": "Clears up charges, but by email and not face to face."
+    }
+   ],
+   "id": "h019",
+   "oid": "e12",
+   "status": "new",
+   "example": true,
+   "created": 1794300000000
+  },
+  {
+   "code": "C-003",
+   "fi": 0,
+   "from": "head teller at a bank branch, 6 years",
+   "zone": "Gustavo A. Madero",
+   "salary": "MXN 12,500 a month",
+   "avail": "available in 3 weeks",
+   "said": "I was head teller at a branch for six years. At the end of each day I balanced the cash from all the tills against what the system said, and if we were over or short even by ten pesos we could not leave until we found which transaction had the error. On paydays there were three times as many transactions and the cut-off was at the same hour. I also entered deposits from companies with many slips.",
+   "gap": "Accounting logic, tax returns and CONTPAQi.",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 1,
+     "quote": "I also entered deposits from companies with many slips",
+     "note": "Data entry with volume, but not journal entries."
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "we could not leave until we found which transaction had the error",
+     "note": "Traces differences to their source every day."
+    },
+    {
+     "aid": "c3",
+     "level": 0,
+     "quote": "",
+     "note": "Wrote nothing about preparing information for taxes."
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "On paydays there were three times as many transactions and the cut-off was at the same hour",
+     "note": "Peaks of work with a fixed hour, like the close."
+    },
+    {
+     "aid": "c5",
+     "level": 0,
+     "quote": "",
+     "note": "Does not mention CONTPAQi."
+    }
+   ],
+   "id": "c003",
+   "oid": "e1",
+   "status": "new",
+   "example": true,
+   "created": 1794300000000
+  },
+  {
+   "code": "C-011",
+   "fi": 1,
+   "from": "inventory at a distribution centre, 3 years",
+   "zone": "Azcapotzalco",
+   "salary": "MXN 11,500 a month",
+   "avail": "available now",
+   "said": "I have three years as an inventory assistant. I enter every goods-in and goods-out of the warehouse in the system, about 300 movements a day. At each month end we do a physical count and I have to compare what was counted with what the system says and check the differences one by one.",
+   "gap": "Bank reconciliation, taxes and CONTPAQi. The find-the-difference test would tell a lot.",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 2,
+     "quote": "I enter every goods-in and goods-out of the warehouse in the system, about 300 movements a day",
+     "note": "Daily entry at high volume."
+    },
+    {
+     "aid": "c2",
+     "level": 1,
+     "quote": "compare what was counted with what the system says and check the differences one by one",
+     "note": "Reconciles stock, not a bank."
+    },
+    {
+     "aid": "c3",
+     "level": 0,
+     "quote": "",
+     "note": "Wrote nothing about taxes or returns."
+    },
+    {
+     "aid": "c4",
+     "level": 1,
+     "quote": "At each month end we do a physical count",
+     "note": "Has a monthly close, but does not say how it goes under pressure."
+    },
+    {
+     "aid": "c5",
+     "level": 0,
+     "quote": "",
+     "note": "Does not mention CONTPAQi."
+    }
+   ],
+   "id": "c011",
+   "oid": "e1",
+   "status": "new",
+   "example": true,
+   "created": 1794300000000
+  },
+  {
+   "id": "p031",
+   "oid": "e2",
+   "code": "P-031",
+   "from": "pharmacy counter, 3 years",
+   "fi": -1,
+   "zone": "Azcapotzalco",
+   "salary": "MXN 13,500 a month",
+   "avail": "available now",
+   "said": "For three years I worked the counter of a pharmacy on a busy avenue. People arrive with a prescription or with a problem and I had to take down exactly what the doctor wrote, because a wrong dose is serious. Plenty of customers came in angry about a price or because their medicine was not in stock, and I had to keep calm and explain what we could and could not do. When something had to be ordered I called the supplier, gave them the order and told the customer the day it would arrive, and I wrote down each pending order in a notebook until the person came to collect it.",
+   "via": "link",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 2,
+     "quote": "I had to take down exactly what the doctor wrote, because a wrong dose is serious",
+     "note": "Taking down exact facts from someone in front of them, with the same cost for an error.",
+     "src": "said"
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "came in angry about a price or because their medicine was not in stock, and I had to keep calm and explain what we could and could not do",
+     "note": "The same calls, face to face: upset person, explain what is covered.",
+     "src": "said"
+    },
+    {
+     "aid": "c3",
+     "level": 1,
+     "quote": "I called the supplier, gave them the order and told the customer the day it would arrive",
+     "note": "Coordinates one supplier and one customer, not people in the field in real time.",
+     "src": "said"
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "I wrote down each pending order in a notebook until the person came to collect it",
+     "note": "Followed several open matters until each one closed.",
+     "src": "said"
+    }
+   ],
+   "gap": "Insurance terms, and working the files in a system instead of on paper.",
+   "status": "new",
+   "example": true,
+   "created": 0
+  },
+  {
+   "id": "g048",
+   "oid": "e2",
+   "code": "G-048",
+   "from": "security at an office building, 6 years",
+   "fi": -1,
+   "zone": "Gustavo A. Madero",
+   "salary": "MXN 12,000 a month",
+   "avail": "available in a month",
+   "said": "I spent six years as a guard at the reception of a corporate building. Every incident had to go in the log the same shift: what happened, at what time, who was involved and what I did, because the report is read by the building manager the next morning. When an alarm went off I called the fire brigade or the ambulance and stayed in contact with them until they arrived, and at the same time I told the floor supervisor what was going on. Tenants would come down furious about a car that was blocked in or a leak, and I had to deal with them without raising my voice.",
+   "via": "link",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 2,
+     "quote": "Every incident had to go in the log the same shift: what happened, at what time, who was involved and what I did",
+     "note": "Writes down the exact facts of an incident while it is fresh.",
+     "src": "said"
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "Tenants would come down furious about a car that was blocked in or a leak, and I had to deal with them without raising my voice",
+     "note": "Handles angry people in person, every shift.",
+     "src": "said"
+    },
+    {
+     "aid": "c3",
+     "level": 2,
+     "quote": "I called the fire brigade or the ambulance and stayed in contact with them until they arrived, and at the same time I told the floor supervisor what was going on",
+     "note": "Coordinating people in the field and keeping someone else informed, at the same time.",
+     "src": "said"
+    },
+    {
+     "aid": "c4",
+     "level": 0,
+     "quote": "",
+     "note": "Nothing he wrote shows following a case over days until it is paid."
+    }
+   ],
+   "gap": "Following a file through to payment, and anything about insurance.",
+   "status": "new",
+   "example": true,
+   "created": 0
+  },
+  {
+   "id": "v052",
+   "oid": "e12",
+   "code": "V-052",
+   "from": "veterinary reception, 4 years",
+   "fi": -1,
+   "zone": "Coyoacán",
+   "salary": "MXN 12,500 a month",
+   "avail": "available in 2 weeks",
+   "said": "I was at the reception of a veterinary clinic for four years. Each animal that came in got a record with the owner's details, their phone and the history of the visits, and I opened it while the owner was standing there with a sick pet. For the clients with pet insurance I had to call the insurer to check whether the treatment was covered before the vet started, and sometimes argue with them. At the end of the consultation I added up what each area had charged, the consultation, the medicines and the studies, and I explained the bill to the owner, who often did not expect the amount and got upset.",
+   "via": "link",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 2,
+     "quote": "Each animal that came in got a record with the owner's details, their phone and the history of the visits, and I opened it while the owner was standing there",
+     "note": "The same registration at the moment of arrival.",
+     "src": "said"
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "I had to call the insurer to check whether the treatment was covered before the vet started",
+     "note": "Already checks cover with an insurer before treatment.",
+     "src": "said"
+    },
+    {
+     "aid": "c3",
+     "level": 2,
+     "quote": "I added up what each area had charged, the consultation, the medicines and the studies",
+     "note": "Puts together an account from several areas.",
+     "src": "said"
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "I explained the bill to the owner, who often did not expect the amount and got upset",
+     "note": "Explains a bill face to face to someone who did not expect it.",
+     "src": "said"
+    }
+   ],
+   "gap": "Hospital volumes and the systems a hospital uses.",
+   "status": "new",
+   "example": true,
+   "created": 0
+  },
+  {
+   "id": "e061",
+   "oid": "e12",
+   "code": "E-061",
+   "from": "school administration, 5 years",
+   "fi": -1,
+   "zone": "Tlalpan",
+   "salary": "MXN 14,000 a month",
+   "avail": "available in 3 weeks",
+   "said": "Five years in the administration office of a private school. I enrolled the new families: I captured the birth certificate, the CURP, the addresses and two phone numbers for each child, and the file had to be complete because the ministry asks for it. Every month I issued the tuition invoices for around four hundred families, which meant checking who had a discount, who was paying for two children and who still owed from the month before. Parents came to the window to argue the charges and I had to go through the account with them line by line. When the payment did not appear in the bank I followed it until it did.",
+   "via": "link",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 2,
+     "quote": "I captured the birth certificate, the CURP, the addresses and two phone numbers for each child, and the file had to be complete",
+     "note": "Registers people with their documents, with the same requirement that the file be complete.",
+     "src": "said"
+    },
+    {
+     "aid": "c2",
+     "level": 0,
+     "quote": "",
+     "note": "Nothing she wrote shows checking cover with an insurer."
+    },
+    {
+     "aid": "c3",
+     "level": 2,
+     "quote": "Every month I issued the tuition invoices for around four hundred families, which meant checking who had a discount, who was paying for two children and who still owed from the month before",
+     "note": "Builds and issues accounts at volume, with conditions per account.",
+     "src": "said"
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "Parents came to the window to argue the charges and I had to go through the account with them line by line",
+     "note": "Explains a disputed account in person.",
+     "src": "said"
+    }
+   ],
+   "gap": "How a policy works and how to confirm it with an insurer.",
+   "status": "new",
+   "example": true,
+   "created": 0
+  },
+  {
+   "id": "s073",
+   "oid": "e1",
+   "code": "S-073",
+   "from": "supermarket cashier supervisor, 5 years",
+   "fi": -1,
+   "zone": "Iztapalapa",
+   "salary": "MXN 13,000 a month",
+   "avail": "available now",
+   "said": "I was a cashier for two years and then supervisor of the lines for three more, in a supermarket. At the close of each shift I counted the drawer of every cashier against what the system said it should have, and when a drawer did not match I went through the tickets one by one until I found where the difference was. I handed the cut to the office with the vouchers attached. The hardest days were the weekends and the fortnight, when the store is full and the cuts still have to come out right before anyone goes home.",
+   "via": "link",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 0,
+     "quote": "",
+     "note": "Nothing she wrote shows journal entries or debits and credits."
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "I counted the drawer of every cashier against what the system said it should have, and when a drawer did not match I went through the tickets one by one until I found where the difference was",
+     "note": "Item-by-item reconciliation against a system, which is the same work as a bank reconciliation.",
+     "src": "said"
+    },
+    {
+     "aid": "c3",
+     "level": 0,
+     "quote": "",
+     "note": "Nothing she wrote shows gathering information for tax returns."
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "The hardest days were the weekends and the fortnight, when the store is full and the cuts still have to come out right before anyone goes home",
+     "note": "Already works accurately on the busiest days, under a deadline.",
+     "src": "said"
+    },
+    {
+     "aid": "c5",
+     "level": 0,
+     "quote": "",
+     "note": "Nothing she wrote shows CONTPAQi or any accounting system."
+    }
+   ],
+   "gap": "Accounting entries, tax dates and CONTPAQi from scratch.",
+   "status": "new",
+   "example": true,
+   "created": 0
+  },
+  {
+   "id": "d084",
+   "oid": "e1",
+   "code": "D-084",
+   "from": "dispatcher at a freight company, 4 years",
+   "fi": -1,
+   "zone": "Nezahualcóyotl",
+   "salary": "MXN 14,500 a month",
+   "avail": "available in 2 weeks",
+   "said": "Four years dispatching trucks for a freight company. I captured every trip in the system with the client, the route, the kilometres and the fuel, and the month did not close until every trip had its paperwork, because the invoicing came out of there. I checked the fuel card statements against the trips, litre by litre, and when they did not match I had to find the trip that was missing. The last days of the month were the worst: the drivers hand in their papers late and everything still has to be in before the fifth.",
+   "via": "link",
+   "evidence": [
+    {
+     "aid": "c1",
+     "level": 1,
+     "quote": "I captured every trip in the system with the client, the route, the kilometres and the fuel",
+     "note": "Captures records at volume for several clients, though not debits and credits.",
+     "src": "said"
+    },
+    {
+     "aid": "c2",
+     "level": 2,
+     "quote": "I checked the fuel card statements against the trips, litre by litre, and when they did not match I had to find the trip that was missing",
+     "note": "Reconciling a statement against records, item by item, which is the same work.",
+     "src": "said"
+    },
+    {
+     "aid": "c3",
+     "level": 1,
+     "quote": "the month did not close until every trip had its paperwork, because the invoicing came out of there",
+     "note": "Gathers documents against a fixed close, though nothing about tax returns.",
+     "src": "said"
+    },
+    {
+     "aid": "c4",
+     "level": 2,
+     "quote": "The last days of the month were the worst: the drivers hand in their papers late and everything still has to be in before the fifth",
+     "note": "Already works through a month-end crunch with a hard date.",
+     "src": "said"
+    },
+    {
+     "aid": "c5",
+     "level": 0,
+     "quote": "",
+     "note": "Nothing he wrote shows CONTPAQi."
+    }
+   ],
+   "gap": "Double-entry accounting, tax obligations and CONTPAQi.",
+   "status": "new",
+   "example": true,
+   "created": 0
+  }
+ ]
+}

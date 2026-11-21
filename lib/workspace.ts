@@ -27,7 +27,10 @@ export type Opening = {
   example?: boolean;
   created: number;
 };
-export type Evidence = { aid: string; level: number; quote: string; note: string; src?: "said" | "cv" };
+// state says why a level of 0 is 0, so that someone who wrote little is not read as someone who cannot do the work:
+// "skipped" they said they have never done it, "thin" they answered but too briefly to tell, "notasked" they were
+// never asked about this activity, which is the case for anyone matched out of the base against a later opening.
+export type Evidence = { aid: string; level: number; quote: string; note: string; src?: "said" | "cv"; state?: "skipped" | "thin" | "notasked" };
 export type InterviewReview = { aid: string; level: number; quote: string; note: string };
 export type WsCandidate = {
   id: string;
@@ -39,6 +42,10 @@ export type WsCandidate = {
   salary: string;
   avail: string;
   said: string;
+  parts?: Record<string, string>; // one answer per activity, as the person wrote it
+  skip?: string[]; // activities they said they have never done
+  via?: "link" | "base"; // "base" means adjacent matched them from an earlier answer, not a new one
+  fromOid?: string; // the opening they originally answered
   evidence: Evidence[];
   gap: string;
   status: "new" | "meet" | "passed" | "failed" | "hired" | "declined";
@@ -243,8 +250,18 @@ const CAND_TOOL: ToolDef = {
   },
 };
 
-function candPrompt(o: Opening, text: string, cv: string) {
-  return `A person coming from another field described their job. Compare what they WROTE against the activities of an opening.
+export const MIN_WORDS = 25; // per activity: short enough to finish in a few minutes, long enough to judge
+
+export const words = (s: string) => (s || "").trim().split(/\s+/).filter(Boolean).length;
+
+// What a candidate is asked about one activity. The opening's own question when there is one, so the survey
+// is the opening's, not a generic form: a blank box makes people write little, and little reads as nothing.
+export function askFor(o: Opening, a: Activity) {
+  return o.questions.find((x) => x.aid === a.id)?.q || `Tell us about a time you did this at work: ${a.name}. What did you do, how often, and who else was involved?`;
+}
+
+function candPrompt(o: Opening, said: string, parts: Record<string, string> | null, skip: string[], cv: string) {
+  return `A person coming from another field described their work. Compare what they WROTE against the activities of an opening.
 
 <opening>${o.title}</opening>
 <activities>
@@ -253,9 +270,14 @@ ${o.activities.map((a) => `${a.id}: ${a.name}. ${a.detail}`).join("\n")}
 <fields>
 ${o.fields.map((f, i) => `${i}: ${f.name}`).join("\n")}
 </fields>
-<person>${text}</person>
-${cv ? `<cv>${cv}</cv>\n` : ""}
-The rule that is never broken: only what the person wrote counts. Never invent experience, figures or results.${cv ? `
+<person>${said}</person>
+${parts ? `<answers>\n${o.activities.map((a) => `${a.id}: ${skip.includes(a.id) ? "[they say they have never done this]" : parts[a.id] || "[not answered]"}`).join("\n\n")}\n</answers>\n` : ""}${cv ? `<cv>${cv}</cv>\n` : ""}The rule that is never broken: only what the person wrote counts. Never invent experience, figures or results.${
+    parts
+      ? `
+Each block in <answers> is this person's own answer to a question about that activity. A quote from anywhere in <person> still counts for any activity.`
+      : `
+This person wrote their answer for a different opening, so none of it was aimed at these activities. Judge only what their words already show and do not stretch a fragment to fit.`
+  }${cv ? `
 The person also uploaded a CV. Prefer their own description. Use the CV only for lines that state something they did; a job title, an employer's name, a degree or a list of skills is not evidence of an activity. Ignore name, age, photo, address, nationality, marital status and schools.` : ""}
 - For each activity give level: 2 if what they wrote shows they already do that same thing, 1 if it shows part of it, 0 if nothing they wrote supports it.
 - quote: a literal, word-for-word copy of the fragment of <person>${cv ? " or <cv>" : ""} that supports it (30 words at most, in the person's own language). If level is 0, quote is empty. The quote has to show the activity itself, not merely the same setting or subject: if the closest fragment only shows that they worked nearby, the level is 0.
@@ -266,12 +288,12 @@ The person also uploaded a CV. Prefer their own description. Use the CV only for
 - gap: what they would have to learn for the role, in one sentence. If the person writes that they do not want this kind of work, or rules out something the job requires, gap says that first, in their terms.`;
 }
 
-const norm = (s: string) => s.toLowerCase().replace(/[“”"«»'’]/g, "").replace(/\s+/g, " ").trim();
+const norm = (s: string) => s.toLowerCase().replace(/[\u201c\u201d"\u00ab\u00bb'\u2019]/g, "").replace(/\s+/g, " ").trim();
 
-export async function createAnswer(o: Opening, input: { text: string; zone: string; pay: string; avail: string; email: string; cv?: string }) {
-  const said = redact(input.text);
-  const cv = input.cv ? redact(input.cv).slice(0, 12000) : "";
-  const r = await ask<{ from?: string; field?: number; evidence?: (Evidence & { source?: string })[]; gap?: string }>(CAND_TOOL, candPrompt(o, said, cv), SYSTEM);
+// One reading of one person against one opening. asked = they were asked about these activities;
+// when they were not, a level of 0 means nobody has asked them yet, which is not the same as no evidence.
+async function score(o: Opening, said: string, parts: Record<string, string> | null, skip: string[], cv: string, asked: boolean) {
+  const r = await ask<{ from?: string; field?: number; evidence?: (Evidence & { source?: string })[]; gap?: string }>(CAND_TOOL, candPrompt(o, said, parts, skip, cv), SYSTEM);
   const hay = norm(said);
   const hayCv = norm(cv);
   // The quote check runs in code, not in the model: a match with no literal quote behind it is discarded.
@@ -290,21 +312,50 @@ export async function createAnswer(o: Opening, input: { text: string; zone: stri
     if (level === 0) quote = "";
     const ev: Evidence = { aid: a.id, level, quote, note };
     if (level > 0) ev.src = inSaid ? "said" : "cv";
+    if (level === 0 && skip.includes(a.id)) {
+      ev.state = "skipped";
+      ev.note = "They say they have never done this.";
+    } else if (level === 0 && asked && words(parts?.[a.id] || "") < MIN_WORDS) {
+      ev.state = "thin";
+      ev.note = "They wrote too little about this to tell. Ask them again before ruling it out.";
+    } else if (level === 0 && !asked) {
+      ev.state = "notasked";
+      ev.note = "Nobody has asked them about this yet. " + note;
+    }
     return ev;
   });
   const fi = Number.isInteger(r.field) && Number(r.field) >= 0 && Number(r.field) < o.fields.length ? Number(r.field) : -1;
+  return { evidence, fi, from: str(r.from, 120) || "field not stated", gap: str(r.gap, 300) };
+}
+
+// A new answer from the public link: one block per activity, each with a minimum, or marked as never done.
+export async function createAnswer(o: Opening, input: { parts?: Record<string, string>; text?: string; skip?: string[]; zone: string; pay: string; avail: string; email: string; cv?: string }) {
+  const skip = (input.skip || []).filter((id) => o.activities.some((a) => a.id === id));
+  const parts: Record<string, string> = {};
+  for (const a of o.activities) {
+    const t = redact(str(input.parts?.[a.id] || "", 3000));
+    if (t && !skip.includes(a.id)) parts[a.id] = t;
+  }
+  const byPart = Object.keys(parts).length > 0 || skip.length > 0;
+  if (byPart) for (const a of o.activities) if (!skip.includes(a.id) && words(parts[a.id] || "") < MIN_WORDS) throw new Error(`Each answer needs at least ${MIN_WORDS} words, or mark it as something you have never done.`);
+  // What the employer reads, and the only text a quote may come from: the person's own words, nothing of ours.
+  const said = byPart ? o.activities.map((a) => (skip.includes(a.id) ? "" : parts[a.id] || "")).filter(Boolean).join("\n\n") : redact(str(input.text || "", 3000));
+  const cv = input.cv ? redact(input.cv).slice(0, 12000) : "";
+  const s = await score(o, said, byPart ? parts : null, skip, cv, byPart);
   const c: WsCandidate = {
     id: rid(),
     oid: o.id,
     code: `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}-${100 + Math.floor(Math.random() * 900)}`,
-    from: str(r.from, 120) || "field not stated",
-    fi,
+    from: s.from,
+    fi: s.fi,
     zone: redact(input.zone) || "area not given",
     salary: redact(input.pay) || "pay not given",
     avail: redact(input.avail),
     said,
-    evidence,
-    gap: str(r.gap, 300),
+    ...(byPart ? { parts, ...(skip.length ? { skip } : {}) } : {}),
+    via: "link",
+    evidence: s.evidence,
+    gap: s.gap,
     status: "new",
     email: input.email,
     ...(cv ? { cv } : {}),
@@ -312,6 +363,61 @@ export async function createAnswer(o: Opening, input: { text: string; zone: stri
   };
   await q(`insert into ws_candidates (id, opening_id, data) values ($1, $2, $3)`, [c.id, o.id, JSON.stringify(c)]);
   return forEmployer(c); // the page shows the candidate what the employer sees, which does not include the email
+}
+
+// The base: everyone who has ever answered a link stays, and can be read against a later opening without
+// being asked anything again. This is the answer to "it does not bring me a single candidate": from the
+// second opening on, the people it brings are the ones the recruiter already met.
+export async function baseSize(oid: string) {
+  await seedOnce();
+  const rows = await q(`select data from ws_candidates`);
+  const all = rows.map((r) => json(r.data) as WsCandidate);
+  const key = (c: WsCandidate) => (c.email || c.said || c.id).trim().toLowerCase();
+  const here = new Set(all.filter((c) => c.oid === oid).map(key));
+  const left = new Set(all.filter((c) => c.oid !== oid && c.said && !here.has(key(c))).map(key));
+  return { base: new Set(all.map(key)).size, left: left.size };
+}
+
+export async function matchFromBase(oid: string, limit = 4) {
+  const o = await getOpening(oid);
+  if (!o) return null;
+  const rows = await q(`select data from ws_candidates`);
+  const all = rows.map((r) => json(r.data) as WsCandidate);
+  const key = (c: WsCandidate) => (c.email || c.said || c.id).trim().toLowerCase();
+  const seen = new Set(all.filter((c) => c.oid === o.id).map(key));
+  const pool: WsCandidate[] = [];
+  for (const c of all.sort((a, b) => (b.created || 0) - (a.created || 0))) {
+    if (c.oid === o.id || !c.said || seen.has(key(c))) continue;
+    seen.add(key(c));
+    pool.push(c);
+    if (pool.length >= Math.max(1, Math.min(limit, 6))) break;
+  }
+  const made: WsCandidate[] = [];
+  for (const p of pool) {
+    const s = await score(o, p.said, null, [], p.cv || "", false);
+    const c: WsCandidate = {
+      ...p,
+      id: rid(),
+      oid: o.id,
+      fromOid: p.fromOid || p.oid,
+      via: "base",
+      evidence: s.evidence,
+      fi: s.fi,
+      gap: s.gap,
+      status: "new",
+      created: Date.now(),
+    };
+    delete c.test;
+    delete c.iv;
+    delete c.d90;
+    delete c.itoken;
+    delete c.interview;
+    delete c.parts; // their answers were written for another opening; only what they wrote is carried over
+    delete c.skip;
+    await q(`insert into ws_candidates (id, opening_id, data) values ($1, $2, $3)`, [c.id, o.id, JSON.stringify(c)]);
+    made.push(forEmployer(c));
+  }
+  return { cands: made, ...(await baseSize(o.id)) };
 }
 
 // What the public candidate page is allowed to see of an opening.

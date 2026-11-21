@@ -5,6 +5,10 @@ export function boot(root, opts) {
 const ac = new AbortController();
 const on = (target, type, fn) => target.addEventListener(type, fn, { signal: ac.signal });
 const LV = {2:"strong",1:"partial",0:"no evidence"};
+const MINW = 25;
+const wc = t => (t||"").trim().split(/\s+/).filter(Boolean).length;
+// A level of 0 is not one thing: said-never, wrote-too-little and never-asked are all different from no evidence.
+const evLabel = e => e.level>0 ? LV[e.level] : e.state==="skipped" ? "says never" : e.state==="thin" ? "too short" : e.state==="notasked" ? "not asked" : LV[0];
 const LANES = [["new","Answered"],["meet","To meet"],["passed","Passed the test"],["hired","Hired"]];
 const D = { openings:{}, cands:{} };
 let dirty = false, loaded = false, pending = 0;
@@ -39,7 +43,7 @@ function save(col, obj){
 function softRender(){ const a = document.activeElement; if (a && root.contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== "checkbox") { dirty = true; return; } render(); }
 
 /* ---------- helpers ---------- */
-const S = { route:"openings", tab:{}, fld:0, kit:"ad", busy:"", err:"", storeNote:"", form:{company:"",raw:"",pay:"",hours:"",zone:""}, cform:{text:"",zone:"",pay:"",avail:"",email:"",consent:false,website:""}, candBusy:false, candErr:"", applied:null, copied:"", cvFile:null, interview:null, iform:{}, ivBusy:false, ivErr:"", live:null };
+const S = { route:"openings", tab:{}, fld:0, kit:"ad", busy:"", err:"", storeNote:"", form:{company:"",raw:"",pay:"",hours:"",zone:""}, cform:{parts:{},skip:[],zone:"",pay:"",avail:"",email:"",consent:false,website:""}, candBusy:false, candErr:"", baseBusy:false, baseErr:"", baseNote:"", applied:null, copied:"", cvFile:null, interview:null, iform:{}, ivBusy:false, ivErr:"", live:null };
 const $ = s => root.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm = s => String(s||"").toLowerCase().replace(/[“”"«»'’]/g,"").replace(/\s+/g," ").trim();
@@ -67,15 +71,26 @@ async function createOpening(){
 }
 async function submitAnswer(o){
   S.candErr = ""; const f = S.cform;
-  if (f.text.trim().split(/\s+/).length < 15) { S.candErr = "Write at least a couple of sentences about what you did on a normal day."; return render(); }
+  const short = o.activities.filter(a => !f.skip.includes(a.id) && wc(f.parts[a.id]) < MINW);
+  if (f.skip.length === o.activities.length) { S.candErr = "Describe at least one of these, otherwise there is nothing to compare."; return render(); }
+  if (short.length) { S.candErr = `Write at least ${MINW} words about: ${short.map(a=>a.name).join("; ")}. If you have never done one of them, tick the box under it.`; return render(); }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) { S.candErr = "Add an email address so the employer can reach you if they want to meet."; return render(); }
   if (!f.consent) { S.candErr = "Tick the box so the employer is allowed to read your answer."; return render(); }
   S.candBusy = true; render();
   if (S.cvFile && S.cvFile.size > 4 * 1024 * 1024) { S.candErr = "That PDF is larger than 4 MB. Upload a smaller one or remove it."; S.candBusy = false; return render(); }
-  const fd = new FormData(); ["text","zone","pay","avail","email","website"].forEach(k => fd.append(k, f[k] || "")); fd.append("consent", "true"); if (S.cvFile) fd.append("cv", S.cvFile);
+  const fd = new FormData(); ["zone","pay","avail","email","website"].forEach(k => fd.append(k, f[k] || ""));
+  fd.append("parts", JSON.stringify(f.parts)); fd.append("skip", JSON.stringify(f.skip)); fd.append("consent", "true"); if (S.cvFile) fd.append("cv", S.cvFile);
   try { const { candidate } = await api("/api/apply/" + o.id, fd); D.cands[candidate.id] = candidate; S.cvFile = null;
-    S.candBusy = false; S.cform = {text:"",zone:"",pay:"",avail:"",email:"",consent:false,website:""}; S.applied = candidate.id; render(); window.scrollTo({top:0}); }
+    S.candBusy = false; S.cform = {parts:{},skip:[],zone:"",pay:"",avail:"",email:"",consent:false,website:""}; S.applied = candidate.id; render(); window.scrollTo({top:0}); }
   catch(e){ S.candBusy = false; S.candErr = e.message; render(); }
+}
+async function runBase(o){
+  S.baseErr = ""; S.baseNote = ""; S.baseBusy = true; render();
+  try { const r = await api("/api/workspace/base", {oid:o.id, limit:4});
+    (r.cands||[]).forEach(c => { D.cands[c.id] = c; });
+    S.baseBusy = false; S.baseNote = r.cands && r.cands.length ? `${r.cands.length} ${r.cands.length===1?"person":"people"} from your base read against this opening.${r.left?` ${r.left} still unread.`:""}` : "Nobody left in your base who has not been read against this opening.";
+    render(); }
+  catch(e){ S.baseBusy = false; S.baseErr = e.message; render(); }
 }
 async function submitInterview(){
   S.ivErr = ""; const qs = S.interview.questions;
@@ -190,8 +205,12 @@ function tKit(o){ const tabs = [["ad","Ad"],["test","20-minute test"],["intervie
   <section class="sheet" style="border-top:0"><div class="col">${body}<div class="wrow"><button class="wbtn ghost sm" data-copy="#copyme">Copy text</button><span class="note">${esc(S.copied)}</span></div></div></section></div>`; }
 
 function tCands(o){ const cs = candsOf(o.id).sort((a,b)=>score(b,o)-score(a,o)); const out = cs.filter(c=>c.status==="failed"||c.status==="declined");
-  const card = c => `<button class="ccard" data-go="c-${c.id}"><span class="wrow" style="justify-content:space-between"><strong>${esc(c.code)}</strong>${dots(c,o)}</span><span class="f">${esc(c.from)}</span><span class="m">${esc(c.zone)} · ${esc(c.salary)}</span>${c.example?`<span class="wtag" style="align-self:flex-start">example</span>`:""}</button>`;
+  const pool = Object.values(D.cands).filter(c=>c.oid!==o.id).length;
+  const card = c => `<button class="ccard" data-go="c-${c.id}"><span class="wrow" style="justify-content:space-between"><strong>${esc(c.code)}</strong>${dots(c,o)}</span><span class="f">${esc(c.from)}</span><span class="m">${esc(c.zone)} · ${esc(c.salary)}</span><span class="wrow" style="gap:6px">${c.example?`<span class="wtag">example</span>`:""}${c.via==="base"?`<span class="wtag">from your base</span>`:""}</span></button>`;
   return `<div class="linkbox"><span>${esc(link(o))}</span><span class="wrow"><button class="wbtn sm ghost" data-copylink="${o.id}">Copy link</button><a class="wbtn sm" href="/apply/${o.id}" target="_blank" rel="noopener">Open candidate page</a></span></div>
+  <section class="sheet strongb"><div class="hrow"><div class="col" style="gap:4px"><div class="lab">Your base</div><p class="note" style="max-width:62ch">Everyone who has ever answered one of your links stays here. adjacent can read them against this opening without asking them anything again: you already met these people, so this is the one list that does not depend on new applicants.${pool?` ${pool} ${pool===1?"person":"people"} from other openings.`:" Nobody from another opening yet."}</p></div>
+    ${S.baseBusy?`<p class="busy">Reading your base against this opening.</p>`:`<button class="wbtn sm" data-act="base" ${pool?"":"disabled"}>Read 4 from the base</button>`}</div>
+    ${S.baseErr?`<p class="warn">${esc(S.baseErr)}</p>`:""}${S.baseNote?`<p class="note">${esc(S.baseNote)}</p>`:""}</section>
   <p class="note">Each dot is one activity of the opening: filled is strong evidence, half is partial, empty is none. The ringed dot is the hardest activity. Candidates are ordered by evidence, with the hardest activity counting double.</p>
   <div class="board">${LANES.map(l=>{const xs=cs.filter(c=>c.status===l[0]);return `<div class="lane"><h3><span>${l[1]}</span><span>${xs.length}</span></h3>${xs.map(card).join("")||`<div class="empty">${l[0]==="new"?"Nobody waiting for review.":"Nobody here yet."}</div>`}</div>`}).join("")}</div>
   ${out.length?`<div class="col"><div class="lab">Not moving forward (${out.length})</div><div class="chips">${out.map(c=>`<button class="chip" data-go="c-${c.id}">${esc(c.code)} · ${esc(c.from)}</button>`).join("")}</div></div>`:""}`; }
@@ -206,11 +225,11 @@ function vOpening(o){ const n = counts(o.id); const t = S.tab[o.id] || (n.all ? 
   ${({work:tWork,fields:tFields,kit:tKit,cands:tCands})[t](o)}`; }
 
 function evidenceCard(c, o){
-  return `<article class="cand"><div class="ch"><div><strong>${esc(c.code)}</strong> <span class="note">comes from ${esc(c.from)}</span></div>
+  return `<article class="cand"><div class="ch"><div><strong>${esc(c.code)}</strong> <span class="note">comes from ${esc(c.from)}</span>${c.via==="base"?` <span class="wtag">from your base</span>`:""}</div>
     <div class="wfacts"><span>${esc(c.zone)}</span><span>expects ${esc(c.salary)}</span>${c.avail?`<span>${esc(c.avail)}</span>`:""}</div></div>
-    ${o.activities.map((a,k)=>{const e=c.evidence.find(x=>x.aid===a.id)||{level:0,quote:"",note:""};return `<div class="ev"><div><span class="pill s${e.level}">${LV[e.level]}</span></div><div><div class="an">${num(k)} ${esc(a.name)}</div>${e.quote?`<blockquote><mark>${esc(e.quote)}</mark></blockquote>`:""}<div class="nt">${e.src==="cv"?`<span class="wtag">from their CV</span> `:""}${esc(e.note)}</div></div></div>`}).join("")}
-    <div class="cf"><strong>Would have to learn:</strong> ${esc(c.gap)}${c.hasCv?`<br>They also uploaded a CV. adjacent read it for lines about what they did; the CV itself is not shown, so name, age and school stay out of the decision.`:""}</div>
-    <details><summary>Everything they wrote</summary><p>${esc(c.said)}</p></details></article>`; }
+    ${o.activities.map((a,k)=>{const e=c.evidence.find(x=>x.aid===a.id)||{level:0,quote:"",note:""};return `<div class="ev"><div><span class="pill s${e.level}${e.level===0&&e.state?" open":""}">${evLabel(e)}</span></div><div><div class="an">${num(k)} ${esc(a.name)}</div>${e.quote?`<blockquote><mark>${esc(e.quote)}</mark></blockquote>`:""}<div class="nt">${e.src==="cv"?`<span class="wtag">from their CV</span> `:""}${esc(e.note)}</div>${c.parts&&c.parts[a.id]?`<details><summary>What they answered here</summary><p>${esc(c.parts[a.id])}</p></details>`:""}</div></div>`}).join("")}
+    <div class="cf"><strong>Would have to learn:</strong> ${esc(c.gap)}${c.hasCv?`<br>They also uploaded a CV. adjacent read it for lines about what they did; the CV itself is not shown, so name, age and school stay out of the decision.`:""}${c.via==="base"?`<br>This person answered an earlier opening of yours. Nothing above was written with this job in mind, so an empty activity means nobody has asked them yet.`:""}</div>
+    ${c.parts?"":`<details><summary>Everything they wrote</summary><p>${esc(c.said)}</p></details>`}</article>`; }
 
 function contact(c){ return c.email ? `<p class="note">Contact: <a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>` : `<p class="note">No contact on file${c.example?" (example person)":""}.</p>`; }
 function vCand(c, o){ const st = c.status, test = c.test || {checks:[]}, crit = o.test.criteria || [], done = (test.checks||[]).filter(Boolean).length; const tl = ["Answered the link"];
@@ -287,22 +306,29 @@ function vApply(o){ const mine = S.applied && D.cands[S.applied] && D.cands[S.ap
   if (o.open === false) return bar + `<div class="head"><h1>This opening has been filled</h1><p>Thank you for your interest.</p></div>`;
   if (mine) return bar + `<div class="head"><div class="lab">Sent</div><h1>This is exactly what the employer sees</h1><p>Your code is ${esc(mine.code)}. They see what you wrote and how it lines up with the job, nothing else: no name, age, photo or school. Your email is shown to them only if they ask to meet you.</p></div>${evidenceCard(mine,o)}
     `;
+  const ask = a => (o.questions||[]).filter(q=>q.aid===a.id).map(q=>q.q)[0] || `Tell us about a time you did this at work: ${a.name}. What did you do, how often, and who else was involved?`;
+  const box = (a,i) => { const skipped = S.cform.skip.includes(a.id), n = wc(S.cform.parts[a.id]);
+    return `<div class="qbox"><div class="wrow" style="justify-content:space-between;align-items:baseline"><div class="an">${num(i)} ${esc(a.name)}</div>${skipped?`<span class="wtag">you have never done this</span>`:`<span class="note">${n} of ${MINW} words${n>=MINW?" ✓":""}</span>`}</div>
+      <p class="note">${esc(ask(a))}</p>
+      ${skipped?"":`<textarea id="p-${esc(a.id)}" data-p="${esc(a.id)}" placeholder="What you did, how often, and who else was involved.">${esc(S.cform.parts[a.id]||"")}</textarea>`}
+      <label class="chk" for="s-${esc(a.id)}"><input type="checkbox" id="s-${esc(a.id)}" data-skip="${esc(a.id)}" ${skipped?"checked":""}><span>I have never done this at work</span></label></div>`; };
+  const left = o.activities.filter(a=>!S.cform.skip.includes(a.id) && wc(S.cform.parts[a.id])<MINW).length;
   return bar + `<div class="head"><div class="lab">${esc(o.company||"")}</div><h1>${esc(o.ad.headline||o.title)}</h1>
     <div class="wfacts"><span>${esc(o.pay||"pay not stated")}</span><span>${esc(o.hours||"hours not stated")}</span><span>${esc(o.zone||"location not stated")}</span></div></div>
   <section class="sheet"><div class="lab" style="margin-bottom:6px">What you would do in this job</div><div class="acts">${o.activities.map((a,i)=>`<div class="act"><div class="k">${num(i)}</div><div><h3>${esc(a.name)}</h3><p>${esc(a.detail)}</p></div></div>`).join("")}</div></section>
-  <section class="sheet strongb"><div class="col"><h2 style="font-size:26px">Tell us what you actually did.</h2>
-    <p class="note">You don't need experience in this industry. Describe a job you have or had, the way you would tell a friend: what you did on a normal day, with whom, how much of it. Only what you write counts, so be specific.</p>
-    <label for="ctext">A normal day in your job<textarea id="ctext" data-c="text" placeholder="For example: I ran the till at a restaurant, balanced the cash at the end of each shift and dealt with customer complaints...">${esc(S.cform.text)}</textarea></label>
+  <section class="sheet strongb"><div class="col"><h2 style="font-size:26px">One question per thing the job asks for.</h2>
+    <p class="note">You don't need experience in this industry, and there is no CV to beat. Answer each one about a job you have or had: ${MINW} words is enough, and if you have never done one of them, say so instead of guessing. Only what you write counts, so be specific. About five minutes.</p>
+    <div class="col" style="gap:14px">${o.activities.map(box).join("")}</div>
     <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><label for="czone">Area where you live<input type="text" id="czone" data-c="zone" value="${esc(S.cform.zone)}"></label>
       <label for="cpay">Pay you expect<input type="text" id="cpay" data-c="pay" value="${esc(S.cform.pay)}"></label><label for="cavail">When you could start<input type="text" id="cavail" data-c="avail" value="${esc(S.cform.avail)}"></label>
       <label for="cemail">Email<input type="text" id="cemail" inputmode="email" autocomplete="email" data-c="email" value="${esc(S.cform.email)}"></label></div>
     <div class="col" style="gap:6px"><span style="font-size:14px;font-weight:500">CV, optional (PDF, up to 4 MB)</span>
       ${S.cvFile?`<span class="wrow"><span class="wtag">${esc(S.cvFile.name)}</span><button class="wlink" data-act="nocv">Remove</button></span>`:`<input type="file" id="ccv" accept="application/pdf,.pdf" data-cv="1">`}
-      <span class="note">Your description above is what counts most. The CV is read once for lines about what you did, the file is not kept, and the employer never sees it: no name, age, photo or school reaches them.</span></div>
+      <span class="note">Your answers above are what count most. The CV is read once for lines about what you did, the file is not kept, and the employer never sees it: no name, age, photo or school reaches them.</span></div>
     <input type="text" data-c="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" value="">
-    <label class="chk" for="cconsent"><input type="checkbox" id="cconsent" data-cc="1" ${S.cform.consent?"checked":""}><span>I agree that the employer for this opening can read my answer, and see my email if they ask to meet me. Answers are deleted after 12 months.</span></label>
+    <label class="chk" for="cconsent"><input type="checkbox" id="cconsent" data-cc="1" ${S.cform.consent?"checked":""}><span>I agree that the employer for this opening can read my answers, and see my email if they ask to meet me. Answers are deleted after 12 months.</span></label>
     ${S.candErr?`<p class="warn">${esc(S.candErr)}</p>`:""}
-    ${S.candBusy?`<p class="busy">Comparing what you wrote with the activities of the job.</p>`:`<div class="wrow"><button class="wbtn" data-act="answer">Send my answer</button><span class="note">Leave your name out of the description. Phone numbers and links in it are removed automatically.</span></div>`}
+    ${S.candBusy?`<p class="busy">Comparing what you wrote with the activities of the job.</p>`:`<div class="wrow"><button class="wbtn" data-act="answer">Send my answers</button><span class="note">${left?`${left} ${left===1?"answer":"answers"} still too short.`:"Leave your name out. Phone numbers and links are removed automatically."}</span></div>`}
   </div></section>`; }
 
 /* ---------- shell ---------- */
@@ -355,6 +381,7 @@ on(document, "click", e => { const t = e.target.closest("button"); if(!t) return
   if (d.act==="readlive") return readLive();
   if (d.act==="create") return createOpening();
   if (d.act==="answer") return submitAnswer(D.openings[S.route.slice(6)]);
+  if (d.act==="base") { const o = D.openings[S.route.slice(2)]; return o && runBase(o); }
   if (d.act==="sendiv") return submitInterview();
   if (d.act==="nocv") { S.cvFile = null; return render(); }
   if (d.copytext) return copy(d.copytext);
@@ -362,8 +389,9 @@ on(document, "click", e => { const t = e.target.closest("button"); if(!t) return
 on(document, "change", e => { const d = e.target.dataset;
   if (d.told) { S.live.told = e.target.checked; return render(); }
   if (d.lang) { S.live.lang = e.target.value; if (S.live.listening) { stopLive(); startLive(); } return; }
-  if (d.cc) { S.cform.consent = e.target.checked; return; } if (d.cv) { S.cvFile = e.target.files && e.target.files[0] || null; return render(); } if (d.chk) { const [id, i] = d.chk.split(":"); setCand(id, c => { c.test = c.test || {checks:[]}; c.test.checks = c.test.checks || []; c.test.checks[+i] = e.target.checked; for (let k=0;k<c.test.checks.length;k++) c.test.checks[k] = !!c.test.checks[k]; }); } });
-on(document, "input", e => { const d = e.target.dataset; if (d.f) S.form[d.f] = e.target.value; if (d.c) S.cform[d.c] = e.target.value; if (d.iq) S.iform[d.iq] = e.target.value;
+  if (d.cc) { S.cform.consent = e.target.checked; return; }
+  if (d.skip) { const k = S.cform.skip.indexOf(d.skip); if (e.target.checked && k<0) S.cform.skip.push(d.skip); if (!e.target.checked && k>=0) S.cform.skip.splice(k,1); S.candErr = ""; return render(); } if (d.cv) { S.cvFile = e.target.files && e.target.files[0] || null; return render(); } if (d.chk) { const [id, i] = d.chk.split(":"); setCand(id, c => { c.test = c.test || {checks:[]}; c.test.checks = c.test.checks || []; c.test.checks[+i] = e.target.checked; for (let k=0;k<c.test.checks.length;k++) c.test.checks[k] = !!c.test.checks[k]; }); } });
+on(document, "input", e => { const d = e.target.dataset; if (d.f) S.form[d.f] = e.target.value; if (d.c) S.cform[d.c] = e.target.value; if (d.p) { S.cform.parts[d.p] = e.target.value; dirty = true; } if (d.iq) S.iform[d.iq] = e.target.value;
   if (d.livebox && S.live) { const q = currentQ(); if (q) { S.live.answers[q.aid] = e.target.value; recBase = e.target.value; } } });
 on(document, "focusout", () => { if (dirty) setTimeout(()=>{ if (dirty) softRender(); }, 50); });
 on(window, "resize", () => { const o = S.route.startsWith("o-") && D.openings[S.route.slice(2)]; if (o && S.tab[o.id]==="fields") drawLines(o); });
