@@ -206,3 +206,27 @@ The rating stays the employer's: adjacent reports a level and a quote, and the e
 **The code guard.** The literal-quote check rewrote 0 of 65 evidence lines in each round: the model never quoted text the person had not written. The guard is still what makes that guarantee, rather than the prompt.
 
 **Judge.** A judge written for this step was checked against the 13 graded answers: v1 agreed on 10 of 13 while catching none of the 3 failures, v2 agreed on 9 and caught 1 but failed 2 answers that should pass, v3 agreed on 11, caught 1 and agreed on all 10 passes. It is not trusted to run alone; the Red Line stays in code.
+
+## What the recruiter panel changed (21 Nov 2026)
+
+Ten simulated recruiters priced the tool. One of ten would pay a monthly seat at 149 dollars; nine of ten
+would pay for a single stuck opening. Two of their objections were not pricing objections at all, they were
+defects, so both are now in the code.
+
+**One empty box made short writers look unqualified.** The public link used to be a single textarea. A person
+who wrote two lines came back with no evidence on every activity, and the eval had graded that as correct
+behaviour, because the engine was right not to invent anything. It was still the wrong product. The link is
+now one question per activity — the opening's own interview question, so the survey is generated per opening
+and not a generic form — with a 25-word minimum per answer and a checkbox to say they have never done that
+thing. `Evidence.state` carries why a level is zero: `skipped`, `thin`, `notasked`. The employer's card shows
+*says never*, *too short* and *not asked* instead of collapsing all three into *no evidence*. The minimum is
+enforced in the route and again in `createAnswer`; what the model is shown is the person's own words only,
+with the activity blocks in `<answers>`, and the literal-quote check still runs against their text alone, so
+the headings we write can never become a quote.
+
+**Every answer used to die with its opening.** `matchFromBase` reads people who answered an earlier opening
+against a new one, without asking them anything again: same stored words, same quote check, levels of zero
+marked `notasked` because nothing they wrote was aimed at these activities. It runs on demand, four at a time,
+from `/api/workspace/base`. Twelve people are seeded so a first opening is not read against an empty base.
+This is what makes a monthly fee honest: the recruiter is paying for a base that grows with every link they
+send, not for a job breakdown they could buy once.
