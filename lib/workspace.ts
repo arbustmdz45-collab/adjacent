@@ -74,9 +74,9 @@ const rid = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
 async function seedOnce() {
   if (process.env.WORKSPACE_EXAMPLES === "0") return;
-  const done = await q(`select 1 from ws_meta where key = 'seeded'`);
+  const done = await q(`select 1 from ws_meta where key = 'seeded-v2'`);
   if (done.length) return;
-  await q(`insert into ws_meta (key, value) values ('seeded', $1) on conflict do nothing`, [new Date().toISOString()]);
+  await q(`insert into ws_meta (key, value) values ('seeded-v2', $1) on conflict do nothing`, [new Date().toISOString()]);
   for (const o of seed.openings) await q(`insert into ws_openings (id, data) values ($1, $2) on conflict do nothing`, [o.id, JSON.stringify(o)]);
   for (const c of seed.cands) await q(`insert into ws_candidates (id, opening_id, data) values ($1, $2, $3) on conflict do nothing`, [c.id, c.oid, JSON.stringify(c)]);
 }
