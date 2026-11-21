@@ -179,9 +179,9 @@ function rolePrompt(f: { company: string; raw: string; pay: string; hours: strin
 <location>${f.zone || "not given"}</location>
 
 Rules:
-- activities: 3 to 5, ids c1, c2, ... Each one is something the person does (verb, object, condition), never a title, a personality trait or a requirement. name is 9 words at most.
-- hard: the activity that is hardest to cover according to the opening. If the opening does not say, pick the most demanding one and say that it is an assumption.
-- requirements: EVERY requirement the opening asks for (degree, years, industry, software, schedule). None is dropped silently. verdict is keep, learn (can be taught in the first weeks) or ask (the company decides, no activity needs it). note explains in one sentence.
+- activities: 3 to 5, ids c1, c2, ... Each one is something the person does (verb, object, condition), never a title, a personality trait or a requirement. name is 9 words at most. Only what the opening states or plainly implies: a short opening gets a short list, and duties it never mentions are not added from what the job usually involves.
+- hard: the activity that is hardest to cover according to the opening. If the opening does not say, pick the most demanding one and say that it is an assumption. If the opening is too short to tell what the person actually does, say that in text and ask the employer to describe a normal day, instead of filling the gap yourself.
+- requirements: EVERY requirement the opening asks for (degree, years, industry, software, schedule). None is dropped silently. verdict is keep, learn (can be taught in the first weeks) or ask (the company decides, no activity needs it). A schedule, shift pattern, location or on-site requirement the opening states is always keep: it is a fact of the job, not a filter on the person. note explains in one sentence.
 - fields: exactly 3 fields from industries other than the opening's, where people already do several of these activities. Be honest about strength: 2 strong, 1 partial, 0 weak. No more than two with strength 2. covers has one entry per activity. same says what they do there that is the same work. teach says what they would have to be taught. find suggests where to look for them without inventing company names, figures or websites.
 - ad: an ad ready to post that describes the job by what is done and invites people from those fields. End it with the line "Location: [LOCATION]. Hours: [HOURS]. Pay: [PAY]." exactly, placeholders included. Do not invent benefits or facts about the company.
 - test: a 20-minute practical test for someone from another field that shows the hardest activity, needing no knowledge of the industry. criteria are 3 or 4 things the employer can observe and tick during the test.
@@ -258,12 +258,12 @@ ${cv ? `<cv>${cv}</cv>\n` : ""}
 The rule that is never broken: only what the person wrote counts. Never invent experience, figures or results.${cv ? `
 The person also uploaded a CV. Prefer their own description. Use the CV only for lines that state something they did; a job title, an employer's name, a degree or a list of skills is not evidence of an activity. Ignore name, age, photo, address, nationality, marital status and schools.` : ""}
 - For each activity give level: 2 if what they wrote shows they already do that same thing, 1 if it shows part of it, 0 if nothing they wrote supports it.
-- quote: a literal, word-for-word copy of the fragment of <person>${cv ? " or <cv>" : ""} that supports it (30 words at most, in the person's own language). If level is 0, quote is empty.
+- quote: a literal, word-for-word copy of the fragment of <person>${cv ? " or <cv>" : ""} that supports it (30 words at most, in the person's own language). If level is 0, quote is empty. The quote has to show the activity itself, not merely the same setting or subject: if the closest fragment only shows that they worked nearby, the level is 0.
 - source: "description" if the quote comes from <person>, "cv" if it comes from <cv>.
 - note: one short sentence in English explaining the level or what is missing.
 - from: the field or job they come from and for how long, in a few words, only what they say.
 - field: the number of the entry in <fields> their job belongs to, or -1 if none.
-- gap: what they would have to learn for the role, in one sentence.`;
+- gap: what they would have to learn for the role, in one sentence. If the person writes that they do not want this kind of work, or rules out something the job requires, gap says that first, in their terms.`;
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/[“”"«»'’]/g, "").replace(/\s+/g, " ").trim();

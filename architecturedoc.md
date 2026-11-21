@@ -190,3 +190,19 @@ Two ways in, one record. `submitInterview(o, c, answers, source)` stores `interv
 **Live.** `/workspace`, on a candidate at "to meet" or "passed": the browser's own speech recognition (`webkitSpeechRecognition`, Chrome) transcribes while the employer talks, the employer corrects the text, and `POST /api/workspace/interview` reads it. No audio reaches the server or is stored; only the corrected text is. The page requires the employer to confirm they told the person first, and `Permissions-Policy` now allows `microphone=(self)`. Where the browser has no speech recognition the same screen takes typed notes.
 
 The rating stays the employer's: adjacent reports a level and a quote, and the employer sets strong, partial or weak per question.
+
+## Eval round on the new product (Class 10, 21 Nov 2026)
+
+18 cases, run against the product's own prompts and schemas, which the harness extracts from `lib/workspace.ts` rather than retyping (`/eval10/extract.mjs`), with the server-side checks from `createAnswer`/`createOpening` reapplied in the harness (`check.py`). Each case was run by Claude Sonnet in an isolated session; Agus graded all 18.
+
+**Set.** 5 openings (one with instructions hidden inside the ad text) and 13 candidate answers against the collections opening: 9 ordinary and 4 attacks (prompt injection, a confident claim with no facts, a request to write experience the person does not have, and a text that is not a job at all).
+
+**Round 1: 13 of 18.** Failures: a two-line opening was padded into five invented activities; the same kind of requirement (a stated schedule) was marked "keep" on four openings and "your call" on a fifth; two answers credited an activity with a quote that only showed the same setting; one answer ignored that the person wrote they no longer want this kind of work.
+
+**The change.** Five rules added to the two prompts: only activities the opening states or plainly implies, with a short opening getting a short list; `hard` asks the employer to describe a normal day when the opening is too thin; a stated schedule, shift, location or on-site requirement is always `keep`; a quote must show the activity itself and not merely the same setting; `gap` reports first when the person rules the work out.
+
+**Round 2: 17 of 18**, same cases. The remaining failure credits an in-person check-out conversation as partial evidence of phoning someone about an overdue account.
+
+**The code guard.** The literal-quote check rewrote 0 of 65 evidence lines in each round: the model never quoted text the person had not written. The guard is still what makes that guarantee, rather than the prompt.
+
+**Judge.** A judge written for this step was checked against the 13 graded answers: v1 agreed on 10 of 13 while catching none of the 3 failures, v2 agreed on 9 and caught 1 but failed 2 answers that should pass, v3 agreed on 11, caught 1 and agreed on all 10 passes. It is not trusted to run alone; the Red Line stays in code.
