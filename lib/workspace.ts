@@ -422,7 +422,8 @@ export async function matchFromBase(oid: string, limit = 4) {
 
 // What the public candidate page is allowed to see of an opening.
 export function publicOpening(o: Opening) {
-  return { id: o.id, company: o.company, title: o.title, pay: o.pay, hours: o.hours, zone: o.zone, activities: o.activities, ad: { headline: o.ad.headline }, open: o.open };
+  // questions carry q only: "listen", which is what the employer listens for, never reaches the candidate.
+  return { id: o.id, company: o.company, title: o.title, pay: o.pay, hours: o.hours, zone: o.zone, activities: o.activities, questions: o.questions.map((x) => ({ aid: x.aid, q: x.q })), ad: { headline: o.ad.headline }, open: o.open };
 }
 
 // ---------- the written interview ----------
