@@ -160,7 +160,7 @@ const ROLE_TOOL: ToolDef = {
       hard: { type: "object", required: ["aid", "text"], properties: { aid: { type: "string" }, text: { type: "string" } } },
       requirements: { type: "array", items: { type: "object", required: ["text", "verdict", "note"], properties: { text: { type: "string" }, verdict: { type: "string", enum: ["keep", "learn", "ask"] }, note: { type: "string" } } } },
       fields: {
-        type: "array", minItems: 3, maxItems: 3,
+        type: "array", minItems: 3, maxItems: 4,
         items: {
           type: "object", required: ["name", "strength", "same", "teach", "find", "covers"],
           properties: {
@@ -189,7 +189,14 @@ Rules:
 - activities: 3 to 5, ids c1, c2, ... Each one is something the person does (verb, object, condition), never a title, a personality trait or a requirement. name is 9 words at most. Only what the opening states or plainly implies: a short opening gets a short list, and duties it never mentions are not added from what the job usually involves.
 - hard: the activity that is hardest to cover according to the opening. If the opening does not say, pick the most demanding one and say that it is an assumption. If the opening is too short to tell what the person actually does, say that in text and ask the employer to describe a normal day, instead of filling the gap yourself.
 - requirements: EVERY requirement the opening asks for (degree, years, industry, software, schedule). None is dropped silently. verdict is keep, learn (can be taught in the first weeks) or ask (the company decides, no activity needs it). A schedule, shift pattern, location or on-site requirement the opening states is always keep: it is a fact of the job, not a filter on the person. note explains in one sentence.
-- fields: exactly 3 fields from industries other than the opening's, where people already do several of these activities. Be honest about strength: 2 strong, 1 partial, 0 weak. No more than two with strength 2. covers has one entry per activity. same says what they do there that is the same work. teach says what they would have to be taught. find suggests where to look for them without inventing company names, figures or websites.
+- fields: 4 fields from industries other than the opening's, where people already do several of these activities. Give 3 only if a fourth would be a stretch; never pad the list to reach four.
+  - name is the job people actually hold there, with its field in brackets, not a whole industry: "order desk clerk (industrial supplies)", not "logistics".
+  - Two fields that are the same work under different industry names count as one. Do not list both.
+  - strength: 2 only if someone in that job does the hardest activity regularly, under comparable pressure, and could be dropped into this opening after being taught the product or the system. 1 if they do some of the activities but not the hardest. 0 if the overlap is a setting or a subject rather than the work itself. At most two with strength 2, and never 2 for the same job renamed.
+  - covers has one entry per activity, and has to agree with strength: a field cannot be 2 while the hardest activity is 0.
+  - same names the moment in their day that is the same work, concretely, not a category.
+  - teach: what they would have to be taught, and how long it plausibly takes. If the opening needs a licence, a registration or a certification that is legally required to do the work, say so here and cap strength at 1.
+  - find: a concrete place to look: the kind of business, the team inside it, or where those people already gather. Never company names, figures, websites, or "job boards".
 - ad: an ad ready to post that describes the job by what is done and invites people from those fields. End it with the line "Location: [LOCATION]. Hours: [HOURS]. Pay: [PAY]." exactly, placeholders included. Do not invent benefits or facts about the company.
 - test: a 20-minute practical test for someone from another field that shows the hardest activity, needing no knowledge of the industry. criteria are 3 or 4 things the employer can observe and tick during the test.
 - questions: one interview question per activity, about past behaviour, that someone from another field can answer. listen says what separates a good answer.`;
@@ -219,7 +226,7 @@ export async function createOpening(input: { company: string; raw: string; pay: 
     activities: acts.map(({ id, name, detail }) => ({ id, name, detail })),
     hard: { aid: map(r.hard?.aid), text: str(r.hard?.text, 400) },
     requirements: (r.requirements || []).slice(0, 10).map((x) => ({ text: str(x.text, 200), verdict: (["keep", "learn", "ask"].includes(String(x.verdict)) ? x.verdict : "ask") as "keep" | "learn" | "ask", note: str(x.note, 400) })),
-    fields: (r.fields || []).slice(0, 3).map((x) => ({
+    fields: (r.fields || []).slice(0, 4).map((x) => ({
       name: str(x.name, 160), strength: lvl(x.strength), same: str(x.same, 600), teach: str(x.teach, 600), find: str(x.find, 600),
       covers: Object.fromEntries(acts.map((a) => [a.id, lvl((x.covers || []).find((c) => c.aid === a.was)?.level)])),
     })),
