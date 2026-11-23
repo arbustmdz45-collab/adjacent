@@ -53,6 +53,13 @@ const ops = () => Object.values(D.openings).sort((a,b)=>(b.created||0)-(a.create
 const candsOf = oid => Object.values(D.cands).filter(c=>c.oid===oid);
 const days = t => Math.max(0, Math.round((Date.now()-(t||Date.now()))/864e5));
 function score(c, o){ return c.evidence.reduce((s,e)=>s+e.level+(o.hard&&o.hard.aid===e.aid?e.level:0),0); }
+// Coverage, not a verdict: each activity counts 0, 1 or 2 by the evidence under it, and the
+// hardest one counts twice. The model never sees this number; it is arithmetic over its levels.
+function cover(c, o){ return { pts: score(c, o), max: (o.activities.length + 1) * 2 }; }
+function ivCover(c, o){ const rv = c.interview; if (!rv) return null;
+  const pts = o.questions.reduce((s,q)=>{ const r = (rv.review||[]).find(x=>x.aid===q.aid) || {level:0};
+    return s + r.level + (o.hard && o.hard.aid === q.aid ? r.level : 0); }, 0);
+  return { pts, max: (o.questions.length + 1) * 2 }; }
 function dots(c, o){ return `<span class="dots" title="Evidence per activity">${o.activities.map(a=>{const e=c.evidence.find(x=>x.aid===a.id)||{level:0};return `<i class="d${e.level}${o.hard&&o.hard.aid===a.id?" hd":""}"></i>`}).join("")}</span>`; }
 function fillAd(o){ return String(o.ad.body||"").replace(/\[LOCATION\]/g, o.zone||"(location missing)").replace(/\[HOURS\]/g, o.hours||"(hours missing)").replace(/\[PAY\]/g, o.pay||"(pay missing)"); }
 function counts(oid){ const cs = candsOf(oid); return { all:cs.length, fresh:cs.filter(c=>c.status==="new").length, meet:cs.filter(c=>c.status==="meet").length, passed:cs.filter(c=>c.status==="passed").length, hired:cs.filter(c=>c.status==="hired").length }; }
@@ -207,7 +214,7 @@ function tKit(o){ const tabs = [["ad","Ad"],["test","20-minute test"],["intervie
 
 function tCands(o){ const cs = candsOf(o.id).sort((a,b)=>score(b,o)-score(a,o)); const out = cs.filter(c=>c.status==="failed"||c.status==="declined");
   const pool = Object.values(D.cands).filter(c=>c.oid!==o.id).length;
-  const card = c => `<button class="ccard" data-go="c-${c.id}"><span class="wrow" style="justify-content:space-between"><strong>${esc(c.code)}</strong>${dots(c,o)}</span><span class="f">${esc(c.from)}</span><span class="m">${esc(c.zone)} · ${esc(c.salary)}</span><span class="wrow" style="gap:6px">${c.example?`<span class="wtag">example</span>`:""}${c.via==="base"?`<span class="wtag">from your base</span>`:""}</span></button>`;
+  const card = c => `<button class="ccard" data-go="c-${c.id}"><span class="wrow" style="justify-content:space-between"><strong>${esc(c.code)}</strong><span class="wrow" style="gap:8px"><span class="cov">${cover(c,o).pts}/${cover(c,o).max}</span>${dots(c,o)}</span></span><span class="f">${esc(c.from)}</span><span class="m">${esc(c.zone)} · ${esc(c.salary)}</span><span class="wrow" style="gap:6px">${c.example?`<span class="wtag">example</span>`:""}${c.via==="base"?`<span class="wtag">from your base</span>`:""}</span></button>`;
   return `<div class="linkbox"><span>${esc(link(o))}</span><span class="wrow"><button class="wbtn sm ghost" data-copylink="${o.id}">Copy link</button><a class="wbtn sm" href="/apply/${o.id}" target="_blank" rel="noopener">Open candidate page</a></span></div>
   <section class="sheet strongb"><div class="hrow"><div class="col" style="gap:4px"><div class="lab">Your base</div><p class="note" style="max-width:62ch">Everyone who has ever answered one of your links stays here. adjacent can read them against this opening without asking them anything again: you already met these people, so this is the one list that does not depend on new applicants.${pool?` ${pool} ${pool===1?"person":"people"} from other openings.`:" Nobody from another opening yet."}</p></div>
     ${S.baseBusy?`<p class="busy">Reading your base against this opening.</p>`:`<button class="wbtn sm" data-act="base" ${pool?"":"disabled"}>Read 4 from the base</button>`}</div>
@@ -226,7 +233,7 @@ function vOpening(o){ const n = counts(o.id); const t = S.tab[o.id] || (n.all ? 
   ${({work:tWork,fields:tFields,kit:tKit,cands:tCands})[t](o)}`; }
 
 function evidenceCard(c, o){
-  return `<article class="cand"><div class="ch"><div><strong>${esc(c.code)}</strong> <span class="note">comes from ${esc(c.from)}</span>${c.via==="base"?` <span class="wtag">from your base</span>`:""}</div>
+  return `<article class="cand"><div class="ch"><div><strong>${esc(c.code)}</strong> <span class="note">comes from ${esc(c.from)}</span>${c.via==="base"?` <span class="wtag">from your base</span>`:""} <span class="cov" title="Evidence counted across the activities, hardest one twice">${cover(c,o).pts} / ${cover(c,o).max} evidence</span></div>
     <div class="wfacts"><span>${esc(c.zone)}</span><span>expects ${esc(c.salary)}</span>${c.avail?`<span>${esc(c.avail)}</span>`:""}</div></div>
     ${o.activities.map((a,k)=>{const e=c.evidence.find(x=>x.aid===a.id)||{level:0,quote:"",note:""};return `<div class="ev"><div><span class="pill s${e.level}${e.level===0&&e.state?" open":""}">${evLabel(e)}</span></div><div><div class="an">${num(k)} ${esc(a.name)}</div>${e.quote?`<blockquote><mark>${esc(e.quote)}</mark></blockquote>`:""}<div class="nt">${e.src==="cv"?`<span class="wtag">from their CV</span> `:""}${esc(e.note)}</div>${c.parts&&c.parts[a.id]?`<details><summary>What they answered here</summary><p>${esc(c.parts[a.id])}</p></details>`:""}</div></div>`}).join("")}
     <div class="cf"><strong>Would have to learn:</strong> ${esc(c.gap)}${c.hasCv?`<br>They also uploaded a CV. adjacent read it for lines about what they did; the CV itself is not shown, so name, age and school stay out of the decision.`:""}${c.via==="base"?`<br>This person answered an earlier opening of yours. Nothing above was written with this job in mind, so an empty activity means nobody has asked them yet.`:""}</div>
@@ -253,9 +260,18 @@ function vCand(c, o){ const st = c.status, test = c.test || {checks:[]}, crit = 
     : `<p class="note">The written interview link appears once you ask to meet.</p>`;
   const iv = (st==="meet"||st==="passed"||st==="hired") ? `<section><div class="mini">Interview</div>${ivHead}${o.questions.map(q=>{const k=o.activities.findIndex(a=>a.id===q.aid);const v=(c.iv||{})[q.aid];const r=rv&&rv.review.find(x=>x.aid===q.aid);const ans=rv&&rv.answers[q.aid];
     return `<div class="iq"><span><strong>${num(k)}</strong> ${esc(q.q)}</span>${rv?`<details style="padding:0;border:0" ${r&&r.quote?"":"open"}><summary>${r&&r.quote?`<mark>${esc(r.quote)}</mark>`:"Read the answer"}</summary><p>${esc(ans||"(no answer)")}</p></details><span class="note"><span class="pill s${r?r.level:0}">adjacent reads: ${LV[r?r.level:0]}</span> ${esc(r?r.note:"")}</span><span class="note"><strong>Listen for:</strong> ${esc(q.listen)}</span>`:""}<span class="rate">${[[2,"strong"],[1,"partial"],[0,"weak"]].map(x=>`<button data-iv="${c.id}:${q.aid}:${x[0]}" aria-pressed="${v===x[0]}">${x[1]}</button>`).join("")}</span></div>`}).join("")}</section>` : "";
+  const cw = cover(c,o), ci = ivCover(c,o);
+  const stand = `<section><div class="mini">Where this stands</div>
+    <div class="stand">
+      <div><span>What they wrote</span><b>${cw.pts} / ${cw.max}</b></div>
+      <div><span>Interview</span><b>${ci ? `${ci.pts} / ${ci.max}` : "not yet"}</b></div>
+      <div><span>Practical test</span><b>${test.result ? (test.result === "pass" ? "passed" : "did not pass") : "not yet"}</b></div>
+    </div>
+    <p class="note">Each activity counts 0, 1 or 2 by the evidence under it, and the hardest activity counts twice. adjacent adds up what it could quote; what it means is yours to decide.</p>
+    <p class="note"><strong>Would have to learn:</strong> ${esc(c.gap)}</p></section>`;
   return `<div class="head"><button class="wlink" data-go="o-${o.id}" data-tab="cands" style="align-self:flex-start">← ${esc(o.title)}</button></div>
   <div class="cgrid">${evidenceCard(c,o)}
-    <aside class="panel"><section><div class="mini">So far</div><div class="tl">${tl.map(x=>`<div>${esc(x)}</div>`).join("")}</div>${c.example?`<span class="wtag" style="align-self:flex-start">example person, fictional</span>`:""}</section>${act}${iv}</aside></div>`; }
+    <aside class="panel"><section><div class="mini">So far</div><div class="tl">${tl.map(x=>`<div>${esc(x)}</div>`).join("")}</div>${c.example?`<span class="wtag" style="align-self:flex-start">example person, fictional</span>`:""}</section>${stand}${act}${iv}</aside></div>`; }
 
 function vLive(){ const L = S.live, o = D.openings[L.oid], c = D.cands[L.id];
   if (!o || !c) { S.live = null; return vOpenings(); }
