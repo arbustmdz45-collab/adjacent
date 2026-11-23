@@ -18,7 +18,7 @@ export async function ask<T>(tool: ToolDef, prompt: string, system: string = SYS
   const client = new Anthropic(); // reads ANTHROPIC_API_KEY
   const base = {
     model: MODEL,
-    max_tokens: 8000, // four fields with their coverage, the ad, the test and the questions do not fit in 4000
+    max_tokens: 6000, // four fields with their coverage, the ad, the test and the questions do not fit in 4000
     system,
     tools: [tool as unknown as Anthropic.Tool],
     messages: [{ role: "user" as const, content: prompt }],
