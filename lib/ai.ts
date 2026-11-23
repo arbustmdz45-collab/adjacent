@@ -2,7 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM } from "./prompt";
 
-export const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
+export const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-5-5";
 
 export type ToolDef = { name: string; description: string; input_schema: unknown };
 
