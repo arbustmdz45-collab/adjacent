@@ -18,7 +18,7 @@ export async function ask<T>(tool: ToolDef, prompt: string, system: string = SYS
   const client = new Anthropic(); // reads ANTHROPIC_API_KEY
   const base = {
     model: MODEL,
-    max_tokens: 4000,
+    max_tokens: 8000, // four fields with their coverage, the ad, the test and the questions do not fit in 4000
     system,
     tools: [tool as unknown as Anthropic.Tool],
     messages: [{ role: "user" as const, content: prompt }],
@@ -34,6 +34,7 @@ export async function ask<T>(tool: ToolDef, prompt: string, system: string = SYS
       messages: [{ role: "user" as const, content: `${prompt}\n\nAnswer only by calling the tool ${tool.name}. Do not write anything outside it.` }],
     });
   }
+  if (res.stop_reason === "max_tokens") throw new Error("The model's answer was cut off before it was complete.");
   const block = res.content.find((b) => b.type === "tool_use");
   if (!block || block.type !== "tool_use") throw new Error("The model returned no structured answer.");
   return block.input as T;
