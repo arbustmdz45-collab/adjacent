@@ -75,6 +75,7 @@ async function submitAnswer(o){
   if (f.skip.length === o.activities.length) { S.candErr = "Describe at least one of these, otherwise there is nothing to compare."; return render(); }
   if (short.length) { S.candErr = `Write at least ${MINW} words about: ${short.map(a=>a.name).join("; ")}. If you have never done one of them, tick the box under it.`; return render(); }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.trim())) { S.candErr = "Add an email address so the employer can reach you if they want to meet."; return render(); }
+  if (!S.cvFile) { S.candErr = "Attach your CV as a PDF. It is read once for lines about what you did, and the employer never sees the file."; return render(); }
   if (!f.consent) { S.candErr = "Tick the box so the employer is allowed to read your answer."; return render(); }
   S.candBusy = true; render();
   if (S.cvFile && S.cvFile.size > 4 * 1024 * 1024) { S.candErr = "That PDF is larger than 4 MB. Upload a smaller one or remove it."; S.candBusy = false; return render(); }
@@ -317,14 +318,14 @@ function vApply(o){ const mine = S.applied && D.cands[S.applied] && D.cands[S.ap
     <div class="wfacts"><span>${esc(o.pay||"pay not stated")}</span><span>${esc(o.hours||"hours not stated")}</span><span>${esc(o.zone||"location not stated")}</span></div></div>
   <section class="sheet"><div class="lab" style="margin-bottom:6px">What you would do in this job</div><div class="acts">${o.activities.map((a,i)=>`<div class="act"><div class="k">${num(i)}</div><div><h3>${esc(a.name)}</h3><p>${esc(a.detail)}</p></div></div>`).join("")}</div></section>
   <section class="sheet strongb"><div class="col"><h2 style="font-size:26px">One question per thing the job asks for.</h2>
-    <p class="note">You don't need experience in this industry, and there is no CV to beat. Answer each one about a job you have or had: ${MINW} words is enough, and if you have never done one of them, say so instead of guessing. Only what you write counts, so be specific. About five minutes.</p>
+    <p class="note">You don't need experience in this industry, and nobody is ranked by their CV here. Answer each one about a job you have or had: ${MINW} words, enough to tell one example properly, and if you have never done one of them, say so instead of guessing. Only what you write counts, so be specific. About ten minutes.</p>
     <div class="col" style="gap:14px">${o.activities.map(box).join("")}</div>
     <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"><label for="czone">Area where you live<input type="text" id="czone" data-c="zone" value="${esc(S.cform.zone)}"></label>
       <label for="cpay">Pay you expect<input type="text" id="cpay" data-c="pay" value="${esc(S.cform.pay)}"></label><label for="cavail">When you could start<input type="text" id="cavail" data-c="avail" value="${esc(S.cform.avail)}"></label>
       <label for="cemail">Email<input type="text" id="cemail" inputmode="email" autocomplete="email" data-c="email" value="${esc(S.cform.email)}"></label></div>
-    <div class="col" style="gap:6px"><span style="font-size:14px;font-weight:500">CV, optional (PDF, up to 4 MB)</span>
+    <div class="col" style="gap:6px"><span style="font-size:14px;font-weight:500">Your CV (PDF, up to 4 MB) — required</span>
       ${S.cvFile?`<span class="wrow"><span class="wtag">${esc(S.cvFile.name)}</span><button class="wlink" data-act="nocv">Remove</button></span>`:`<input type="file" id="ccv" accept="application/pdf,.pdf" data-cv="1">`}
-      <span class="note">Your answers above are what count most. The CV is read once for lines about what you did, the file is not kept, and the employer never sees it: no name, age, photo or school reaches them.</span></div>
+      <span class="note">Your answers above are what decide it. The CV is read once for lines about what you did, the file is not kept, and the employer never sees it: no name, age, photo or school reaches them.</span></div>
     <input type="text" data-c="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" value="">
     <label class="chk" for="cconsent"><input type="checkbox" id="cconsent" data-cc="1" ${S.cform.consent?"checked":""}><span>I agree that the employer for this opening can read my answers, and see my email if they ask to meet me. Answers are deleted after 12 months.</span></label>
     ${S.candErr?`<p class="warn">${esc(S.candErr)}</p>`:""}

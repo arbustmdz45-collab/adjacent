@@ -257,7 +257,7 @@ const CAND_TOOL: ToolDef = {
   },
 };
 
-export const MIN_WORDS = 25; // per activity: short enough to finish in a few minutes, long enough to judge
+export const MIN_WORDS = 60; // per activity: long enough that one example is told properly, not a line
 
 export const words = (s: string) => (s || "").trim().split(/\s+/).filter(Boolean).length;
 
