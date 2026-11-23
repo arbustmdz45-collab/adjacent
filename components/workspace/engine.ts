@@ -5,7 +5,7 @@ export function boot(root, opts) {
 const ac = new AbortController();
 const on = (target, type, fn) => target.addEventListener(type, fn, { signal: ac.signal });
 const LV = {2:"strong",1:"partial",0:"no evidence"};
-const MINW = 25;
+const MINW = 60; // keep in step with MIN_WORDS in lib/workspace.ts
 const wc = t => (t||"").trim().split(/\s+/).filter(Boolean).length;
 // A level of 0 is not one thing: said-never, wrote-too-little and never-asked are all different from no evidence.
 const evLabel = e => e.level>0 ? LV[e.level] : e.state==="skipped" ? "says never" : e.state==="thin" ? "too short" : e.state==="notasked" ? "not asked" : LV[0];

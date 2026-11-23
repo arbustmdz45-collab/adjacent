@@ -3,9 +3,11 @@
   --paper:#F3F0E9; --surface:#FBFAF6; --ink:#24221F; --muted:#6C675F; --line:#DAD5CA;
   --accent:#3F5348; --mark:#EAD9A8; --mark-ink:#24221F;
   --strong:#3F6B52; --partial:#9A6A1F; --none:#8D877D;
-  --display:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --display:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --logo:"Newsreader",Georgia,"Times New Roman",serif;
+  --r:12px; --r-sm:9px;
 }
 .adjw, .adjw * {box-sizing:border-box}
 .adjw {background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
@@ -20,7 +22,7 @@
 .adjw .warn {border-left:3px solid var(--partial);padding:8px 12px;background:var(--paper);font-size:14px}
 .adjw .app {display:grid;grid-template-columns:216px minmax(0,1fr);min-height:100vh}
 .adjw .rail {border-right:1px solid var(--line);background:var(--surface);padding:30px 0;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}
-.adjw .brand {font-family:var(--mono);font-weight:500;font-size:23px;letter-spacing:-.03em;padding:0 26px}
+.adjw .brand {font-family:var(--logo);font-weight:400;font-size:27px;letter-spacing:-.02em;padding:0 26px}
 .adjw .brand i {display:none}
 .adjw .rail nav {display:flex;flex-direction:column}
 .adjw .rail nav button {background:none;border:0;text-align:left;padding:11px 26px;font-weight:400;cursor:pointer;border-left:2px solid transparent;display:flex;justify-content:space-between;gap:8px}
@@ -36,16 +38,16 @@
 .adjw .head h2 {font-size:clamp(24px,3vw,32px);max-width:26ch}
 .adjw .head p {max-width:66ch;color:var(--muted)}
 .adjw .hrow {display:flex;justify-content:space-between;gap:16px;align-items:flex-end;flex-wrap:wrap}
-.adjw .sheet {background:var(--surface);border:1px solid var(--line);padding:28px}
+.adjw .sheet {border-radius:var(--r);background:var(--surface);border:1px solid var(--line);padding:28px}
 .adjw .sheet.strongb {border:1px solid var(--line);border-top:1px solid var(--ink)}
 .adjw .grid2 {display:grid;grid-template-columns:1.25fr 1fr;gap:22px}
 .adjw .col {display:flex;flex-direction:column;gap:14px}
 .adjw .wrow {display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .adjw label {display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:500}
-.adjw input[type=text], .adjw textarea {background:var(--surface);border:1px solid var(--line);padding:11px 13px;width:100%;border-radius:2px}
+.adjw input[type=text], .adjw textarea {background:var(--surface);border:1px solid var(--line);padding:11px 13px;width:100%;border-radius:var(--r-sm)}
 .adjw input[type=text]:hover, .adjw textarea:hover {border-color:var(--none)}
 .adjw textarea {min-height:150px;resize:vertical;line-height:1.5}
-.adjw .wbtn {background:var(--ink);color:var(--paper);border:1px solid var(--ink);padding:11px 22px;font-weight:500;font-size:14px;letter-spacing:.02em;cursor:pointer;border-radius:2px;transition:background .15s,border-color .15s}
+.adjw .wbtn {border-radius:var(--r-sm);background:var(--ink);color:var(--paper);border:1px solid var(--ink);padding:11px 22px;font-weight:500;font-size:14px;letter-spacing:.02em;cursor:pointer;border-radius:var(--r-sm);transition:background .15s,border-color .15s}
 .adjw .wbtn:hover {background:var(--accent);border-color:var(--accent);color:var(--paper)}
 .adjw .wbtn.ghost {background:none;color:var(--ink)}
 .adjw .wbtn.ghost:hover {background:var(--ink);color:var(--paper);border-color:var(--ink)}
@@ -54,8 +56,8 @@
 .adjw .chips {display:flex;gap:8px;flex-wrap:wrap}
 .adjw .chip {background:none;border:1px solid var(--line);padding:7px 12px;font-size:14px;cursor:pointer;text-align:left}
 .adjw .chip:hover {border-color:var(--ink)}
-.adjw .wtag {font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);border-radius:2px;color:var(--muted);padding:2px 7px;white-space:nowrap}
-.adjw .pill {font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border:1px solid currentColor;border-radius:2px;white-space:nowrap;display:inline-block}
+.adjw .wtag {font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);border-radius:var(--r-sm);color:var(--muted);padding:2px 7px;white-space:nowrap}
+.adjw .pill {font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border:1px solid currentColor;border-radius:var(--r-sm);white-space:nowrap;display:inline-block}
 .adjw .pill.s2 {color:var(--strong)}
 .adjw .pill.s1 {color:var(--partial)}
 .adjw .pill.s0 {color:var(--none);border-style:dashed}
@@ -81,7 +83,7 @@
 .adjw .tabs button {background:none;padding:12px 0;font-weight:400;cursor:pointer;border:0;border-bottom:1px solid transparent;margin-bottom:-1px;color:var(--muted)}
 .adjw .tabs button[aria-selected="true"] {border-bottom-color:var(--ink);color:var(--ink);font-weight:500}
 .adjw .tabs .ct {font-size:12px;color:var(--muted);margin-left:6px}
-.adjw .linkbox {font-size:13.5px;background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:12px 16px;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.adjw .linkbox {border-radius:var(--r-sm);font-size:13.5px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 16px;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
 .adjw .linkbox span {overflow-wrap:anywhere}
 .adjw .acts {display:flex;flex-direction:column}
 .adjw .act {display:grid;grid-template-columns:40px 1fr;gap:12px;padding:15px 0;border-top:1px solid var(--line)}
@@ -89,7 +91,7 @@
 .adjw .act .k {font-family:var(--mono);font-size:14px;color:var(--muted);padding-top:3px}
 .adjw .act h3 {font-size:18px;font-weight:500;font-family:var(--body);letter-spacing:0;line-height:1.3}
 .adjw .act p {color:var(--muted);margin-top:4px;max-width:70ch}
-.adjw .act.hard h3::after {content:"hardest to cover";font-size:10.5px;font-weight:500;letter-spacing:.12em;border-radius:2px;text-transform:uppercase;margin-left:10px;padding:2px 7px;border:1px solid var(--partial);color:var(--partial);white-space:nowrap;vertical-align:middle}
+.adjw .act.hard h3::after {content:"hardest to cover";font-size:10.5px;font-weight:500;letter-spacing:.12em;border-radius:var(--r-sm);text-transform:uppercase;margin-left:10px;padding:2px 7px;border:1px solid var(--partial);color:var(--partial);white-space:nowrap;vertical-align:middle}
 .adjw .reqs {display:flex;flex-direction:column;gap:12px}
 .adjw .req {display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start}
 .adjw .req p {grid-column:2;font-size:14px;color:var(--muted)}
@@ -120,15 +122,15 @@
 .adjw .board {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
 .adjw .lane {display:flex;flex-direction:column;gap:10px;min-height:120px;border-top:1px solid var(--ink);padding-top:12px}
 .adjw .lane h3 {font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;display:flex;justify-content:space-between}
-.adjw .ccard {background:var(--surface);border:1px solid var(--line);padding:12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:7px;width:100%}
-.adjw .ccard {transition:border-color .15s}
+.adjw .ccard {border-radius:var(--r);background:var(--surface);border:1px solid var(--line);padding:12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:7px;width:100%}
+.adjw .ccard {border-radius:var(--r);transition:border-color .15s}
 .adjw .ccard:hover {border-color:var(--ink)}
 .adjw .ccard strong {font-family:var(--mono);font-weight:500;font-size:18px;letter-spacing:-.02em}
 .adjw .ccard span.f {font-size:14px;line-height:1.3}
 .adjw .ccard .m {font-size:12.5px;color:var(--muted)}
 .adjw .empty {font-size:14px;color:var(--muted);border:1px dashed var(--line);padding:12px}
 .adjw .cgrid {display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:22px;align-items:start}
-.adjw .cand {border:1px solid var(--line);background:var(--surface)}
+.adjw .cand {border-radius:var(--r);border:1px solid var(--line);background:var(--surface)}
 .adjw .cand .ch {display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--line);align-items:baseline}
 .adjw .cand .ch strong {font-family:var(--mono);font-weight:500;font-size:25px;letter-spacing:-.02em}
 .adjw .ev {display:grid;grid-template-columns:140px 1fr;gap:6px 14px;padding:12px 18px;border-bottom:1px solid var(--line)}
@@ -140,7 +142,7 @@
 .adjw details {padding:12px 18px;border-top:1px solid var(--line);font-size:15px}
 .adjw details summary {cursor:pointer;font-weight:500}
 .adjw details p {margin-top:8px;max-width:70ch}
-.adjw .panel {display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-top:1px solid var(--ink);background:var(--surface)}
+.adjw .panel {border-radius:var(--r);display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-top:1px solid var(--ink);background:var(--surface)}
 .adjw .panel section {padding:16px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
 .adjw .panel section:first-child {border-top:0}
 .adjw .tl {display:flex;flex-direction:column;gap:6px;font-size:14px}
@@ -190,7 +192,7 @@
 .adjw .orow {grid-template-columns:1fr repeat(4,auto)}
 .adjw .orow .go {display:none}
 .adjw .mrow {grid-template-columns:1fr repeat(5,auto)}
-.adjw .sheet {padding:16px}
+.adjw .sheet {border-radius:var(--r);padding:16px}
 }
 @media (max-width:520px) {
 .adjw .board {grid-template-columns:1fr}
@@ -213,14 +215,14 @@
 .adjw button, .adjw input, .adjw textarea { font-family: var(--body); }
 
 /* the candidate survey: one question per activity, with a minimum, so a short answer is not read as a missing skill */
-.adjw .qbox {display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--line);border-radius:3px;background:var(--paper)}
+.adjw .qbox {border-radius:var(--r);display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--paper)}
 .adjw .qbox textarea {min-height:96px}
 .adjw .qbox .chk {font-size:13px}
 .adjw .wtag, .adjw .pill {font-family:var(--mono);letter-spacing:.02em}
 .adjw .pill.s0.open {border-style:dotted;color:var(--muted)}
 
 /* coverage: arithmetic over the evidence levels, shown so the recruiter can take it apart */
-.adjw .cov {font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);border-radius:2px;padding:2px 7px;white-space:nowrap}
+.adjw .cov {font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);border-radius:var(--r-sm);padding:2px 7px;white-space:nowrap}
 .adjw .stand {display:flex;gap:10px;margin:4px 0 2px}
 .adjw .stand > div {flex:1;display:flex;flex-direction:column;gap:3px;border-top:2px solid var(--line);padding-top:8px}
 .adjw .stand span {font-size:12px;color:var(--muted)}
